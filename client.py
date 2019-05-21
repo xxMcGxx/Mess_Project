@@ -18,6 +18,16 @@ def create_presence(account_name='Guest'):
     return out
 
 
+# Функция разбирает ответ сервера
+def process_ans(message):
+    if RESPONSE in message:
+        if message[RESPONSE] == 200:
+            return '200 : OK'
+        elif message[RESPONSE] == 400:
+            return f'400 : {message[ERROR]}'
+    raise ValueError
+
+
 def main():
     # Загружаем параметы коммандной строки
     try:
@@ -38,8 +48,11 @@ def main():
     transport.connect((server_address, server_port))
     message_to_server = create_presence()
     send_message(transport, message_to_server)
-    answer = get_message(transport)
-    print(answer)
+    try:
+        answer = process_ans(get_message(transport))
+        print(answer)
+    except (ValueError, json.JSONDecodeError):
+        print('Не удалось декодировать сообщение сервера.')
 
 
 if __name__ == '__main__':

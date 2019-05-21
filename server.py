@@ -5,9 +5,17 @@ from common.variables import *
 from common.utils import *
 
 
-# Обработчик сообщений от клиентов, принимает словарь - сообщение от клинта, созвращает словарь ответ для клиента
+# Обработчик сообщений от клиентов, принимает словарь - сообщение от клинта, проверяет корректность, возвращает \
+#                                                                                       словарь-ответ для клиента
 def process_client_message(message):
-    return {'test': 'test from server чмоке*'}
+    if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message and \
+            message[USER][ACCOUNT_NAME] == 'Guest':
+        return {RESPONSE: 200}
+    else:
+        return {
+            RESPONSE: 400,
+            ERROR: 'Bad Request'
+        }
 
 
 def main():
@@ -22,7 +30,7 @@ def main():
         if listen_port < 1024 or listen_port > 65535:
             raise ValueError
     except IndexError:
-        print('После параметра \'p\'- необходимо указать номер порта.')
+        print('После параметра -\'p\' необходимо указать номер порта.')
         exit(1)
     except ValueError:
         print('В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
@@ -57,7 +65,7 @@ def main():
             response = process_client_message(message_from_cient)
             send_message(client, response)
             client.close()
-        except (TypeError, json.JSONDecodeError):
+        except (ValueError, json.JSONDecodeError):
             print('Принято некорретное сообщение от клиента.')
             client.close()
 
