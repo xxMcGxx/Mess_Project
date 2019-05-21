@@ -20,7 +20,7 @@ def get_message(client):
 
 # Утилита кодирования и отправки сообщения
 # принимает словарь и отправляет его
-def send_message(sock , message):
+def send_message(sock, message):
     js_message = json.dumps(message)
     encoded_message = js_message.encode(ENCODING)
     sock.send(encoded_message)

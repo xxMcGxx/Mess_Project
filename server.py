@@ -7,7 +7,7 @@ from common.utils import *
 
 # Обработчик сообщений от клиентов, принимает словарь - сообщение от клинта, созвращает словарь ответ для клиента
 def process_client_message(message):
-    return {'test' : 'test'}
+    return {'test': 'test from server чмоке*'}
 
 
 def main():
@@ -50,14 +50,14 @@ def main():
     transport.listen(MAX_CONNECTIONS)
 
     while True:
-        client , client_address = transport.accept()
+        client, client_address = transport.accept()
         try:
             message_from_cient = get_message(client)
             print(message_from_cient)
             response = process_client_message(message_from_cient)
             send_message(client, response)
             client.close()
-        except (TypeError , json.JSONDecodeError):
+        except (TypeError, json.JSONDecodeError):
             print('Принято некорретное сообщение от клиента.')
             client.close()
 
