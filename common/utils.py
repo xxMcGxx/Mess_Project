@@ -21,6 +21,8 @@ def get_message(client):
 # Утилита кодирования и отправки сообщения
 # принимает словарь и отправляет его
 def send_message(sock, message):
+    if not isinstance(message , dict):
+        raise TypeError
     js_message = json.dumps(message)
     encoded_message = js_message.encode(ENCODING)
     sock.send(encoded_message)
