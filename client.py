@@ -44,7 +44,6 @@ def main():
     namespace = parser.parse_args(sys.argv[1:])
     server_address = namespace.addr
     server_port = namespace.port
-    print(server_address, server_port)
 
     # проверим подходящий номер порта
     if not 1023 < server_port < 65536:

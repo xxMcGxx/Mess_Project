@@ -3,6 +3,7 @@ sys.path.append('../')
 from client import create_presence, process_ans
 from common.variables import *
 import unittest
+from errors import ReqFieldMissingError
 
 
 # Класс с тестами
@@ -23,7 +24,7 @@ class TestClass(unittest.TestCase):
 
     # тест исключения без поля RESPONSE
     def test_no_response(self):
-        self.assertRaises(ValueError, process_ans, {ERROR: 'Bad Request'})
+        self.assertRaises(ReqFieldMissingError, process_ans, {ERROR: 'Bad Request'})
 
 
 if __name__ == '__main__':

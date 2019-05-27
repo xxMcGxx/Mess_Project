@@ -3,6 +3,7 @@ sys.path.append('../')
 from common.utils import *
 from common.variables import *
 import unittest
+from errors import NonDictInputError
 
 
 # Тестовый класс для тестирования отпраки и получения, при создании требует словарь, который будет прогонятся
@@ -46,7 +47,7 @@ class Tests(unittest.TestCase):
         # проверка корретности кодирования словаря. сравниваем результат довренного кодирования и результат от тестируемой функции
         self.assertEqual(test_socket.encoded_message, test_socket.receved_message)
         # дополнительно, проверим генерацию исключения, при не словаре на входе.
-        self.assertRaises(TypeError, send_message, test_socket, 1111)
+        self.assertRaises(NonDictInputError, send_message, test_socket, 1111)
 
     # тест функции приёма сообщения
     def test_get_message(self):
