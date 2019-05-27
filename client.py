@@ -2,6 +2,7 @@ import sys
 import json
 import socket
 import time
+import argparse
 from common.variables import *
 from common.utils import *
 
@@ -28,18 +29,25 @@ def process_ans(message):
     raise ValueError
 
 
+# Создаём парсер аргументов коммандной строки
+def create_arg_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('addr', default=DEFAULT_IP_ADDRESS, nargs='?')
+    parser.add_argument('port', default=DEFAULT_PORT, type=int, nargs='?')
+    return parser
+
+
 def main():
     # Загружаем параметы коммандной строки
-    try:
-        server_address = sys.argv[1]
-        server_port = int(sys.argv[2])
-        if server_port < 1024 or server_port > 65535:
-            raise ValueError
-    except IndexError:
-        server_address = DEFAULT_IP_ADDRESS
-        server_port = DEFAULT_PORT
-    except ValueError:
-        print('В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
+    parser = create_arg_parser()
+    namespace = parser.parse_args(sys.argv[1:])
+    server_address = namespace.addr
+    server_port = namespace.port
+    print(server_address, server_port)
+
+    # проверим подходящий номер порта
+    if not 1023 < server_port < 65536:
+        print('Необходимо указать порт в диапазоне от 1024 до 65536.')
         exit(1)
 
     # Инициализация сокета и обмен
