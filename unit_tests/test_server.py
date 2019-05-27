@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from server import process_client_message
 from common.variables import *
 import unittest
