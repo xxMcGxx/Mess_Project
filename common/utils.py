@@ -1,4 +1,5 @@
 from common.variables import *
+from errors import IncorrectDataRecivedError, NonDictInputError
 import json
 
 
@@ -13,16 +14,16 @@ def get_message(client):
         if isinstance(response, dict):
             return response
         else:
-            raise ValueError
+            raise IncorrectDataRecivedError
     else:
-        raise ValueError
+        raise IncorrectDataRecivedError
 
 
 # Утилита кодирования и отправки сообщения
 # принимает словарь и отправляет его
 def send_message(sock, message):
-    if not isinstance(message , dict):
-        raise TypeError
+    if not isinstance(message, dict):
+        raise NonDictInputError
     js_message = json.dumps(message)
     encoded_message = js_message.encode(ENCODING)
     sock.send(encoded_message)

@@ -2,6 +2,7 @@ import socket
 import sys
 import argparse
 import json
+from errors import IncorrectDataRecivedError
 from common.variables import *
 from common.utils import *
 
@@ -36,7 +37,7 @@ def main():
 
     # проверка получения корретного номера порта для работы сервера.
     if not 1023 < listen_port < 65536:
-        print('Необходимо указать порт в диапазоне от 1024 до 65536.')
+        print('Необходимо указать порт в диапазоне от 1024 до 65535.')
         exit(1)
 
     # Готовим сокет
@@ -56,8 +57,11 @@ def main():
             response = process_client_message(message_from_cient)
             send_message(client, response)
             client.close()
-        except (ValueError, json.JSONDecodeError):
-            print('Принято некорретное сообщение от клиента.')
+        except json.JSONDecodeError:
+            print('Не удалось декодировать Json строку.')
+            client.close()
+        except IncorrectDataRecivedError:
+            print('Приняты некорректные данные.')
             client.close()
 
 

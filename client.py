@@ -5,6 +5,7 @@ import time
 import argparse
 from common.variables import *
 from common.utils import *
+from errors import IncorrectDataRecivedError, ReqFieldMissingError
 
 
 # Функция генерирует запрос о присутствии клиента
@@ -26,7 +27,7 @@ def process_ans(message):
             return '200 : OK'
         elif message[RESPONSE] == 400:
             return f'400 : {message[ERROR]}'
-    raise ValueError
+    raise ReqFieldMissingError(RESPONSE)
 
 
 # Создаём парсер аргументов коммандной строки
@@ -59,8 +60,10 @@ def main():
     try:
         answer = process_ans(get_message(transport))
         print(answer)
-    except (ValueError, json.JSONDecodeError):
-        print('Не удалось декодировать сообщение сервера.')
+    except json.JSONDecodeError:
+        print('Не удалось декодировать полученную Json строку.')
+    except ReqFieldMissingError as missing_error:
+        print(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
 
 
 if __name__ == '__main__':
