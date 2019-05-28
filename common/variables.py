@@ -1,3 +1,5 @@
+import logging
+
 # Порт поумолчанию для сетевого ваимодействия
 DEFAULT_PORT = 7777
 # IP адрес по умолчанию для подключения клиента
@@ -8,6 +10,8 @@ MAX_CONNECTIONS = 5
 MAX_PACKAGE_LENGTH = 1024
 # Кодировка проекта
 ENCODING = 'utf-8'
+# Текущий уровень логирования
+LOGGING_LEVEL = logging.DEBUG
 
 # Прококол JIM основные ключи:
 ACTION = 'action'
@@ -19,3 +23,4 @@ ACCOUNT_NAME = 'account_name'
 PRESENCE = 'presence'
 RESPONSE = 'response'
 ERROR = 'error'
+
