@@ -16,3 +16,82 @@
 2019-05-28 14:57:21,363 DEBUG client.py Сформировано presence сообщение для пользователя Guest
 2019-05-28 14:57:21,363 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
 2019-05-28 14:57:21,363 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:18:33,958 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:18:33,960 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:19:43,253 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:19:43,254 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:19:43,256 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:19:43,256 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:21:47,270 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:21:47,271 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:21:47,272 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:21:47,272 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:24:32,364 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:24:32,365 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:24:32,366 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:24:32,366 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:38:58,483 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:38:58,484 DEBUG decos.py Была вызвана функция <function create_presence at 0x009B07C8> c параметрами () , {}
+2019-06-01 20:38:58,484 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:38:58,485 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:38:58,485 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:47:39,196 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:47:39,197 DEBUG decos.py Была вызвана функция <function create_presence at 0x001C07C8> c параметрами () , {}
+2019-06-01 20:47:39,197 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:47:39,198 DEBUG decos.py Была вызвана функция <function process_ans at 0x02D7E858> c параметрами ({'response': 200},) , {}
+2019-06-01 20:47:39,198 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:47:39,198 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:50:42,735 DEBUG decos.py Была вызвана функция <function create_arg_parser at 0x034CC588> c параметрами () , {}
+2019-06-01 20:50:42,736 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:50:42,737 DEBUG decos.py Была вызвана функция <function create_presence at 0x00E807C8> c параметрами () , {}
+2019-06-01 20:50:42,737 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:50:42,737 DEBUG decos.py Была вызвана функция <function send_message at 0x0346E858> c параметрами (<socket.socket fd=616, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50529), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559411442.7374454, 'user': {'account_name': 'Guest'}}) , {}
+2019-06-01 20:50:42,738 DEBUG decos.py Была вызвана функция <function get_message at 0x03316E40> c параметрами (<socket.socket fd=616, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50529), raddr=('127.0.0.1', 7777)>,) , {}
+2019-06-01 20:50:42,738 DEBUG decos.py Была вызвана функция <function process_ans at 0x0346ECD8> c параметрами ({'response': 200},) , {}
+2019-06-01 20:50:42,738 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:50:42,738 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 20:59:15,309 DEBUG decos.py Была вызвана функция create_arg_parser c параметрами () , {}
+2019-06-01 20:59:15,311 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 20:59:15,312 DEBUG decos.py Была вызвана функция create_presence c параметрами () , {}
+2019-06-01 20:59:15,312 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 20:59:15,312 DEBUG decos.py Была вызвана функция send_message c параметрами (<socket.socket fd=636, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50619), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559411955.3125231, 'user': {'account_name': 'Guest'}}) , {}
+2019-06-01 20:59:15,312 DEBUG decos.py Была вызвана функция get_message c параметрами (<socket.socket fd=636, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50619), raddr=('127.0.0.1', 7777)>,) , {}
+2019-06-01 20:59:15,313 DEBUG decos.py Была вызвана функция process_ans c параметрами ({'response': 200},) , {}
+2019-06-01 20:59:15,313 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 20:59:15,313 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 21:04:44,853 DEBUG decos.py Была вызвана функция create_arg_parser c параметрами () , {}. Вызов из модуля decos
+2019-06-01 21:04:44,853 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 21:04:44,854 DEBUG decos.py Была вызвана функция create_presence c параметрами () , {}. Вызов из модуля decos
+2019-06-01 21:04:44,854 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 21:04:44,855 DEBUG decos.py Была вызвана функция send_message c параметрами (<socket.socket fd=644, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50684), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559412284.854046, 'user': {'account_name': 'Guest'}}) , {}. Вызов из модуля decos
+2019-06-01 21:04:44,855 DEBUG decos.py Была вызвана функция get_message c параметрами (<socket.socket fd=644, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50684), raddr=('127.0.0.1', 7777)>,) , {}. Вызов из модуля decos
+2019-06-01 21:04:44,855 DEBUG decos.py Была вызвана функция process_ans c параметрами ({'response': 200},) , {}. Вызов из модуля decos
+2019-06-01 21:04:44,855 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 21:04:44,855 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 21:05:23,353 DEBUG decos.py Была вызвана функция create_arg_parser c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:05:23,355 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 21:05:23,355 DEBUG decos.py Была вызвана функция create_presence c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:05:23,356 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 21:05:23,356 DEBUG decos.py Была вызвана функция send_message c параметрами (<socket.socket fd=604, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50690), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559412323.3566222, 'user': {'account_name': 'Guest'}}) , {}. Вызов из модуля common.utils
+2019-06-01 21:05:23,356 DEBUG decos.py Была вызвана функция get_message c параметрами (<socket.socket fd=604, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50690), raddr=('127.0.0.1', 7777)>,) , {}. Вызов из модуля common.utils
+2019-06-01 21:05:23,356 DEBUG decos.py Была вызвана функция process_ans c параметрами ({'response': 200},) , {}. Вызов из модуля __main__
+2019-06-01 21:05:23,356 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 21:05:23,357 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 21:06:55,715 DEBUG decos.py Была вызвана функция create_arg_parser c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:06:55,716 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 21:06:55,717 DEBUG decos.py Была вызвана функция create_presence c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:06:55,718 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 21:06:55,718 DEBUG decos.py Была вызвана функция send_message c параметрами (<socket.socket fd=604, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50698), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559412415.7185597, 'user': {'account_name': 'Guest'}}) , {}. Вызов из модуля common.utils
+2019-06-01 21:06:55,718 DEBUG decos.py Была вызвана функция get_message c параметрами (<socket.socket fd=604, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50698), raddr=('127.0.0.1', 7777)>,) , {}. Вызов из модуля common.utils
+2019-06-01 21:06:55,718 DEBUG decos.py Была вызвана функция process_ans c параметрами ({'response': 200},) , {}. Вызов из модуля __main__
+2019-06-01 21:06:55,719 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 21:06:55,719 INFO client.py Принят ответ от сервера 200 : OK
+2019-06-01 21:07:23,692 DEBUG decos.py Была вызвана функция create_arg_parser c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:07:23,693 INFO client.py Запущен клиент с парамертами: адрес сервера: 127.0.0.1 , порт: 7777
+2019-06-01 21:07:23,694 DEBUG decos.py Была вызвана функция create_presence c параметрами () , {}. Вызов из модуля __main__
+2019-06-01 21:07:23,694 DEBUG client.py Сформировано presence сообщение для пользователя Guest
+2019-06-01 21:07:23,694 DEBUG decos.py Была вызвана функция send_message c параметрами (<socket.socket fd=624, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50701), raddr=('127.0.0.1', 7777)>, {'action': 'presence', 'time': 1559412443.6946514, 'user': {'account_name': 'Guest'}}) , {}. Вызов из модуля common.utils
+2019-06-01 21:07:23,694 DEBUG decos.py Была вызвана функция get_message c параметрами (<socket.socket fd=624, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 50701), raddr=('127.0.0.1', 7777)>,) , {}. Вызов из модуля common.utils
+2019-06-01 21:07:23,695 DEBUG decos.py Была вызвана функция process_ans c параметрами ({'response': 200},) , {}. Вызов из модуля __main__
+2019-06-01 21:07:23,695 DEBUG client.py Разбор сообщения от сервера: {'response': 200}
+2019-06-01 21:07:23,695 INFO client.py Принят ответ от сервера 200 : OK

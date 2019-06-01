@@ -8,12 +8,14 @@ import logs.config_client_log
 from common.variables import *
 from common.utils import *
 from errors import IncorrectDataRecivedError, ReqFieldMissingError
+from decos import log
 
 # Инициализация клиентского логера
-client_logger = logging.getLogger('client')
+logger = logging.getLogger('client')
 
 
 # Функция генерирует запрос о присутствии клиента
+@log
 def create_presence(account_name='Guest'):
     out = {
         ACTION: PRESENCE,
@@ -22,13 +24,14 @@ def create_presence(account_name='Guest'):
             ACCOUNT_NAME: account_name
         }
     }
-    client_logger.debug(f'Сформировано {PRESENCE} сообщение для пользователя {account_name}')
+    logger.debug(f'Сформировано {PRESENCE} сообщение для пользователя {account_name}')
     return out
 
 
 # Функция разбирает ответ сервера
+@log
 def process_ans(message):
-    client_logger.debug(f'Разбор сообщения от сервера: {message}')
+    logger.debug(f'Разбор сообщения от сервера: {message}')
     if RESPONSE in message:
         if message[RESPONSE] == 200:
             return '200 : OK'
@@ -38,6 +41,7 @@ def process_ans(message):
 
 
 # Создаём парсер аргументов коммандной строки
+@log
 def create_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('addr', default=DEFAULT_IP_ADDRESS, nargs='?')
@@ -54,11 +58,11 @@ def main():
 
     # проверим подходящий номер порта
     if not 1023 < server_port < 65536:
-        client_logger.critical(
+        logger.critical(
             f'Попытка запуска клиента с неподходящим номером порта: {server_port}. Допустимы адреса с 1024 до 65535. Клиент завершается.')
         exit(1)
 
-    client_logger.info(f'Запущен клиент с парамертами: адрес сервера: {server_address} , порт: {server_port}')
+    logger.info(f'Запущен клиент с парамертами: адрес сервера: {server_address} , порт: {server_port}')
     # Инициализация сокета и обмен
 
     try:
@@ -67,14 +71,14 @@ def main():
         message_to_server = create_presence()
         send_message(transport, message_to_server)
         answer = process_ans(get_message(transport))
-        client_logger.info(f'Принят ответ от сервера {answer}')
+        logger.info(f'Принят ответ от сервера {answer}')
         print(answer)
     except json.JSONDecodeError:
-        client_logger.error('Не удалось декодировать полученную Json строку.')
+        logger.error('Не удалось декодировать полученную Json строку.')
     except ReqFieldMissingError as missing_error:
-        client_logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
+        logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
     except ConnectionRefusedError:
-        client_logger.critical(f'Не удалось подключиться к серверу {server_address}:{server_port}, конечный компьютер отверг запрос на подключение.')
+        logger.critical(f'Не удалось подключиться к серверу {server_address}:{server_port}, конечный компьютер отверг запрос на подключение.')
 
 
 if __name__ == '__main__':
