@@ -58,9 +58,10 @@ def main():
 
     transport.listen(MAX_CONNECTIONS)
 
+
+    client, client_address = transport.accept()
+    logger.info(f'Установлено соедение с ПК {client_address}')
     while True:
-        client, client_address = transport.accept()
-        logger.info(f'Установлено соедение с ПК {client_address}')
         try:
             message_from_cient = get_message(client)
             logger.debug(f'Получено сообщение {message_from_cient}')
@@ -68,8 +69,8 @@ def main():
             response = process_client_message(message_from_cient)
             logger.info(f'Cформирован ответ клиенту {response}')
             send_message(client, response)
-            logger.debug(f'Соединение с клиентом {client_address} закрывается.')
-            client.close()
+            #logger.debug(f'Соединение с клиентом {client_address} закрывается.')
+            #client.close()
         except json.JSONDecodeError:
             logger.error(f'Не удалось декодировать Json строку, полученную от клиента {client_address}. Соединение закрывается.')
             client.close()

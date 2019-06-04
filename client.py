@@ -7,7 +7,7 @@ import logging
 import logs.config_client_log
 from common.variables import *
 from common.utils import *
-from errors import IncorrectDataRecivedError, ReqFieldMissingError , ServerError
+from errors import IncorrectDataRecivedError, ReqFieldMissingError, ServerError
 from decos import log
 
 # Инициализация клиентского логера
@@ -15,10 +15,20 @@ logger = logging.getLogger('client')
 
 
 # Функция запрашивает текст сообщения и возвращает его. Так же завершает работу при вводе подобной комманды
-def create_message():
-    pass
-
-
+def create_message(sock, account_name='Guest'):
+    message = input('Введите сообщение для отправки или \'!!!\' для завершения работы: ')
+    if message == '!!!':
+        sock.close()
+        logger.info('Завершение работы по команде пользователя.')
+        print('Спасибо за использование нашего сервиса!')
+        exit(0)
+    message_dict = {
+        ACTION: MESSAGE,
+        TIME: time.time(),
+        ACCOUNT_NAME: account_name,
+        MESSAGE_TEXT: message
+    }
+    return message_dict
 
 
 # Функция генерирует запрос о присутствии клиента
@@ -35,10 +45,11 @@ def create_presence(account_name='Guest'):
     return out
 
 
-# Функция разбирает ответ сервера
+# Функция разбирает ответ сервера на сообщение о присутствии, возращает 200 если все ОК или генерирует исключение при\
+# ошибке.
 @log
-def process_ans(message):
-    logger.debug(f'Разбор сообщения от сервера: {message}')
+def process_response_ans(message):
+    logger.debug(f'Разбор приветственного сообщения от сервера: {message}')
     if RESPONSE in message:
         if message[RESPONSE] == 200:
             return '200 : OK'
@@ -85,21 +96,44 @@ def main():
         transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         transport.connect((server_address, server_port))
         send_message(transport, create_presence())
-        answer = process_ans(get_message(transport))
+        answer = process_response_ans(get_message(transport))
         logger.info(f'Установлено соединение с сервером. Ответ сервера: {answer}')
-        print(answer)
+        print(f'Установлено соединение с сервером. Ответ сервера: {answer}')
     except json.JSONDecodeError:
         logger.error('Не удалось декодировать полученную Json строку.')
+        exit(1)
     except ServerError as error:
         logger.error(f'При установке соединения сервер вернул ошибку: {error.text}')
+        exit(1)
     except ReqFieldMissingError as missing_error:
         logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
+        exit(1)
     except ConnectionRefusedError:
         logger.critical(
             f'Не удалось подключиться к серверу {server_address}:{server_port}, конечный компьютер отверг запрос на подключение.')
+        exit(1)
     else:
         # Если соединение с сервером установлено корректно, начинаем обмен с ним, согласно требуемому режиму.
-        print('Ok') # Todo
+        # основной цикл прогрммы:
+        while True:
+            # режим работы - отправка сообщений
+            if client_mode == 'send':
+                try:
+                    send_message(transport, create_message(transport))
+                    ans = process_response_ans(get_message(transport))
+                    logger.info(f'Сообщение успешно отправлено, ответ сервера: {ans}')
+                except json.JSONDecodeError:
+                    logger.error('Не удалось декодировать полученную Json строку.')
+                    exit(1)
+                except ServerError as error:
+                    logger.error(f'При установке соединения сервер вернул ошибку: {error.text}')
+                    exit(1)
+                except ReqFieldMissingError as missing_error:
+                    logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
+                    exit(1)
+                except (ConnectionResetError, ConnectionError, ConnectionAbortedError):
+                    logger.error(f'Соединение с сервером {server_address} было потеряно.')
+                    exit(1)
 
 
 if __name__ == '__main__':
