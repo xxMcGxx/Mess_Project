@@ -14,6 +14,17 @@ from decos import log
 logger = logging.getLogger('client')
 
 
+# Функция - обработчик сообщений других пользователей, поступающих с сервера.
+@log
+def message_from_server(message):
+    if ACTION in message and message[ACTION] == MESSAGE and SENDER in message and MESSAGE_TEXT in message:
+        print(f'Получено сообщение от пользователя {message[SENDER]}:\n{message[MESSAGE_TEXT]}')
+        logger.info(f'Получено сообщение от пользователя {message[SENDER]}:\n{message[MESSAGE_TEXT]}')
+    else:
+        logger.error(f'Получено некорректное сообщение с сервера: {message}')
+
+
+@log
 # Функция запрашивает текст сообщения и возвращает его. Так же завершает работу при вводе подобной комманды
 def create_message(sock, account_name='Guest'):
     message = input('Введите сообщение для отправки или \'!!!\' для завершения работы: ')
@@ -28,6 +39,7 @@ def create_message(sock, account_name='Guest'):
         ACCOUNT_NAME: account_name,
         MESSAGE_TEXT: message
     }
+    logger.debug(f'Сформирован словарь сообщения: {message_dict}')
     return message_dict
 
 
@@ -98,7 +110,7 @@ def main():
         send_message(transport, create_presence())
         answer = process_response_ans(get_message(transport))
         logger.info(f'Установлено соединение с сервером. Ответ сервера: {answer}')
-        print(f'Установлено соединение с сервером. Ответ сервера: {answer}')
+        print(f'Установлено соединение с сервером.')
     except json.JSONDecodeError:
         logger.error('Не удалось декодировать полученную Json строку.')
         exit(1)
@@ -115,22 +127,23 @@ def main():
     else:
         # Если соединение с сервером установлено корректно, начинаем обмен с ним, согласно требуемому режиму.
         # основной цикл прогрммы:
+        if client_mode == 'send':
+            print('Режим работы - отправка сообщений.')
+        else:
+            print('Режим работы - приём сообщений.')
         while True:
             # режим работы - отправка сообщений
             if client_mode == 'send':
                 try:
                     send_message(transport, create_message(transport))
-                    ans = process_response_ans(get_message(transport))
-                    logger.info(f'Сообщение успешно отправлено, ответ сервера: {ans}')
-                except json.JSONDecodeError:
-                    logger.error('Не удалось декодировать полученную Json строку.')
+                except (ConnectionResetError, ConnectionError, ConnectionAbortedError):
+                    logger.error(f'Соединение с сервером {server_address} было потеряно.')
                     exit(1)
-                except ServerError as error:
-                    logger.error(f'При установке соединения сервер вернул ошибку: {error.text}')
-                    exit(1)
-                except ReqFieldMissingError as missing_error:
-                    logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
-                    exit(1)
+
+            # Режим работы приём:
+            if client_mode == 'listen':
+                try:
+                    message_from_server(get_message(transport))
                 except (ConnectionResetError, ConnectionError, ConnectionAbortedError):
                     logger.error(f'Соединение с сервером {server_address} было потеряно.')
                     exit(1)
