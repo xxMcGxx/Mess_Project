@@ -53,7 +53,7 @@ def process_client_message(message, messages_list, client, clients, names):
 
 
 @log
-# Функция адресной отправки сообщения, определённому клиенту. Принимает словарь сообщение, список зарегистрированых
+# Функция адресной отправки сообщения определённому клиенту. Принимает словарь сообщение, список зарегистрированых
 # пользователей и слушающие сокеты. Ничего не возвращает.
 def process_message(message, names, listen_socks):
     if message[DESTINATION] in names and names[message[DESTINATION]] in listen_socks:

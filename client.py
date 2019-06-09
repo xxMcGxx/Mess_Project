@@ -103,7 +103,7 @@ def create_presence(account_name):
 # Функция выводящяя справку по использованию.
 def print_help():
     print('Поддерживаемые команды:')
-    print('message - отправить сообщение, кому и текст будет запрошены отдельно.')
+    print('message - отправить сообщение. Кому и текст будет запрошены отдельно.')
     print('help - вывести подсказки по командам')
     print('exit - выход из программы')
 
@@ -121,7 +121,7 @@ def process_response_ans(message):
     raise ReqFieldMissingError(RESPONSE)
 
 
-# Парсер аргументов коммандной строки и читаем параметры, возвращаем 3 параметра
+# Парсер аргументов коммандной строки
 @log
 def arg_parser():
     parser = argparse.ArgumentParser()
@@ -173,7 +173,7 @@ def main():
     except ReqFieldMissingError as missing_error:
         logger.error(f'В ответе сервера отсутствует необходимое поле {missing_error.missing_field}')
         exit(1)
-    except ConnectionRefusedError:
+    except (ConnectionRefusedError, ConnectionError):
         logger.critical(
             f'Не удалось подключиться к серверу {server_address}:{server_port}, конечный компьютер отверг запрос на подключение.')
         exit(1)
