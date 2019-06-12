@@ -152,6 +152,8 @@ def main():
     # Если имя пользователя не было задано, необходимо запросить пользователя.
     if not client_name:
         client_name = input('Введите имя пользователя: ')
+    else:
+        print(f'Клиентский модуль запущен с именем: {client_name}')
 
     logger.info(
         f'Запущен клиент с парамертами: адрес сервера: {server_address} , порт: {server_port}, имя пользователя: {client_name}')
