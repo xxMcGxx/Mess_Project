@@ -14,5 +14,4 @@ while True:
         process.append(subprocess.Popen('python client.py -n test3', creationflags=subprocess.CREATE_NEW_CONSOLE))
     elif action == 'x':
         while process:
-            victim = process.pop()
-            victim.kill()
+            process.pop().kill()
