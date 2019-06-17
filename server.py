@@ -54,6 +54,7 @@ class ServerMaker(type):
         # Если обнаружено использование недопустимого метода connect, бросаем исключение:
         if 'connect' in methods:
             raise TypeError('Использование метода connect недопустимо в серверном классе')
+        # Если сокет не инициализировался константами SOCK_STREAM(TCP) AF_INET(IPv4), тоже исключение.
         if not ('SOCK_STREAM' in attrs and 'AF_INET' in attrs):
             raise TypeError('Некорректная инициализация сокета.')
         super().__init__(clsname, bases, clsdict)
