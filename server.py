@@ -45,7 +45,7 @@ class ServerMaker(type):
             else:
                 # Раз функция разбираем код, получая используемые методы и атрибуты.
                 for i in ret:
-                    if i.opname == 'LOAD_METHOD':
+                    if i.opname == 'LOAD_GLOBAL':
                         if i.argval not in methods:
                             methods.append(i.argval)
                     elif i.opname == 'LOAD_ATTR':
