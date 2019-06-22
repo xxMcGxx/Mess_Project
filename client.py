@@ -2,7 +2,6 @@ import sys
 import json
 import socket
 import time
-import dis
 import argparse
 import logging
 import threading
@@ -11,39 +10,10 @@ from common.variables import *
 from common.utils import *
 from errors import IncorrectDataRecivedError, ReqFieldMissingError, ServerError
 from decos import log
+from metaclasses import ClientMaker
 
 # Инициализация клиентского логера
 logger = logging.getLogger('client')
-
-
-# Метакласс для проверки корректности клиентов:
-class ClientMaker(type):
-    def __init__(self, clsname, bases, clsdict):
-        # Список методов, которые используются в функциях класса:
-        methods = []
-        for func in clsdict:
-            # Пробуем
-            try:
-                ret = dis.get_instructions(clsdict[func])
-                # Если не функция то ловим исключение
-            except TypeError:
-                pass
-            else:
-                # Раз функция разбираем код, получая используемые методы.
-                for i in ret:
-                    if i.opname == 'LOAD_GLOBAL':
-                        if i.argval not in methods:
-                            methods.append(i.argval)
-        # Если обнаружено использование недопустимого метода accept, listen, socket бросаем исключение:
-        for command in ('accept', 'listen', 'socket'):
-            if command in methods:
-                raise TypeError('В классе обнаружено использование запрещённого метода')
-        # Вызов get_message или send_message из utils считаем корректным использованием сокетов
-        if 'get_message' in methods or 'send_message' in methods:
-            pass
-        else:
-            raise TypeError('Отсутствуют вызовы функций, работающих с сокетами.')
-        super().__init__(clsname, bases, clsdict)
 
 
 # Класс формировки и отправки сообщений на сервер и взаимодействия с пользователем.
