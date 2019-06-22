@@ -5,6 +5,7 @@ import json
 import logging
 import select
 import time
+import threading
 import logs.config_server_log
 from errors import IncorrectDataRecivedError
 from common.variables import *
@@ -30,7 +31,7 @@ def arg_parser():
 
 
 # Основной класс сервера
-class Server(metaclass=ServerMaker):
+class Server(threading.Thread, metaclass=ServerMaker):
     port = Port()
 
     def __init__(self, listen_address, listen_port):
@@ -47,6 +48,9 @@ class Server(metaclass=ServerMaker):
         # Словарь содержащий сопоставленные имена и соответствующие им сокеты.
         self.names = dict()
 
+        # Конструктор предка
+        super().__init__()
+
     def init_socket(self):
         logger.info(
             f'Запущен сервер, порт для подключений: {self.port} , адрес с которого принимаются подключения: {self.addr}. Если адрес не указан, принимаются соединения с любых адресов.')
@@ -59,7 +63,7 @@ class Server(metaclass=ServerMaker):
         self.sock = transport
         self.sock.listen()
 
-    def main_loop(self):
+    def run(self):
         # Инициализация Сокета
         self.init_socket()
 
@@ -151,13 +155,33 @@ class Server(metaclass=ServerMaker):
             return
 
 
+def print_help():
+    print('Поддерживаемые комманды:')
+    print('exit - завершение работы сервера.')
+    print('help - вывод справки по поддерживаемым командам')
+
+
 def main():
     # Загрузка параметров командной строки, если нет параметров, то задаём значения по умоланию.
     listen_address, listen_port = arg_parser()
 
-    # Создание экземпляра класса - сервера.
+    # Создание экземпляра класса - сервера и его запуск:
     server = Server(listen_address, listen_port)
-    server.main_loop()
+    server.daemon = True
+    server.start()
+
+    # Печатаем справку:
+    print_help()
+
+    # Основной цикл сервера:
+    while True:
+        command = input('Введите комманду: ')
+        if command == 'help':
+            print_help()
+        elif command == 'exit':
+            break
+        else:
+            print('Команда не распознана.')
 
 
 if __name__ == '__main__':
