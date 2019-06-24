@@ -119,33 +119,39 @@ class ServerStorage:
 
     # Функция возвращает список известных пользователей со временем последнего входа.
     def users_list(self):
-        users = []
-        # Запрос строк таблицы пользователей и перебор их.
-        for user in self.session.query(self.AllUsers).all():
-            # Формируется список кортежей имя - последний вход
-            users.append((user.name, user.last_login))
-        return users
+        # Запрос строк таблицы пользователей.
+        query = self.session.query(
+            self.AllUsers.name,
+            self.AllUsers.last_login
+            )
+        # Возвращаем список кортежей
+        return query.all()
 
     # Функция возвращает список активных пользователей
     def active_users_list(self):
-        users = []
         # Запрашиваем соединение таблиц и собираем кортежи имя, адрес, порт, время.
-        for user in self.session.query(self.ActiveUsers, self.AllUsers).join(self.AllUsers):
-            users.append((user[1].name, user[0].ip_address, user[0].port, user[0].login_time))
+        query = self.session.query(
+            self.AllUsers.name,
+            self.ActiveUsers.ip_address,
+            self.ActiveUsers.port,
+            self.ActiveUsers.login_time
+        ).join(self.AllUsers)
         # Возвращаем список кортежей
-        return users
+        return query.all()
 
     # Функция возвращающаяя историю входов по пользователю или всем пользователям
     def login_history(self, username=None):
-        logins = []
         # Запрашиваем историю входа
-        query = self.session.query(self.LoginHistory, self.AllUsers).join(self.AllUsers)
+        query = self.session.query(self.AllUsers.name,
+                                   self.LoginHistory.date_time,
+                                   self.LoginHistory.ip,
+                                   self.LoginHistory.port
+                                   ).join(self.AllUsers)
         # Если было указано имя пользователя, то фильтруем по нему
         if username:
             query = query.filter(self.AllUsers.name == username)
-        for result in query.all():
-            logins.append((result[1].name, result[0].date_time, result[0].ip, result[0].port))
-        return logins
+        # Возвращаем список кортежей
+        return query.all()
 
 
 # Отладка
@@ -153,6 +159,7 @@ if __name__ == '__main__':
     test_db = ServerStorage()
     # test_db.user_login('1111', '192.168.1.113', 8080)
     # test_db.user_login('McG2', '192.168.1.113', 8081)
+    print(test_db.users_list())
     # print(test_db.active_users_list())
     # test_db.user_logout('McG')
-    test_db.login_history('test1')
+    # print(test_db.login_history('re'))
