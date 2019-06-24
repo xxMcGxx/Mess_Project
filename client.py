@@ -153,6 +153,60 @@ def arg_parser():
     return server_address, server_port, client_name
 
 
+# Функция запрос контакт листа
+def contacts_list_request(sock, name):
+    logger.debug(f'Запрос контакт листа для пользователся {name}')
+    req = {
+        ACTION: GET_CONTACTS,
+        TIME: time.time(),
+        USER: name
+    }
+    logger.debug(f'Сформирован запрос {req}')
+    send_message(sock, req)
+    ans = get_message(sock)
+    logger.debug(f'Получен ответ {ans}')
+    if RESPONSE in ans and ans[RESPONSE] == 202:
+        logger.info('Загрузка списка контактов с сервера удачно завершена.')
+        return ans[LIST_INFO]
+    else:
+        logger.error('Ошибка запроса контакт-листа.')
+        return
+
+# Функция добавления пользователя в контакт лист
+def add_contact(sock , username, contact):
+    logger.debug(f'Создание контакта {contact}')
+    req = {
+        ACTION: ADD_CONTACT,
+        TIME: time.time(),
+        USER: username,
+        ACCOUNT_NAME: contact
+    }
+    send_message(sock , req)
+    ans = get_message(sock)
+    if RESPONSE in ans:
+        pass
+    else:
+        raise ServerError('Ошибка создания контакта')
+    print('Удачное созданеи контакта')
+
+
+# Функция удаления пользователя из контакт листа
+def remove_contact(sock , username, contact):
+    logger.debug(f'Создание контакта {contact}')
+    req = {
+        ACTION: REMOVE_CONTACT,
+        TIME: time.time(),
+        USER: username,
+        ACCOUNT_NAME: contact
+    }
+    send_message(sock , req)
+    ans = get_message(sock)
+    if RESPONSE in ans:
+        pass
+    else:
+        raise ServerError('Ошибка удаления клиента')
+    print('Удачное удаление')
+
 def main():
     # Сообщаем о запуске
     print('Консольный месседжер. Клиентский модуль.')
@@ -191,6 +245,10 @@ def main():
             f'Не удалось подключиться к серверу {server_address}:{server_port}, конечный компьютер отверг запрос на подключение.')
         exit(1)
     else:
+        # Загружаем контакт - лист
+        contacts = contacts_list_request(transport , client_name)
+        print(contacts)
+        add_contact(transport , client_name , 'test1')
         # Если соединение с сервером установлено корректно, запускаем клиенский процесс приёма сообщний
         module_reciver = ClientReader(client_name, transport)
         module_reciver.daemon = True

@@ -127,13 +127,14 @@ class Server(threading.Thread, metaclass=ServerMaker):
     #     словарь-ответ в случае необходимости.
     def process_client_message(self, message, client):
         logger.debug(f'Разбор сообщения от клиента : {message}')
+
         # Если это сообщение о присутствии, принимаем и отвечаем
         if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message:
             # Если такой пользователь ещё не зарегистрирован, регистрируем, иначе отправляем ответ и завершаем соединение.
             if message[USER][ACCOUNT_NAME] not in self.names.keys():
                 self.names[message[USER][ACCOUNT_NAME]] = client
-                client_ip , client_port = client.getpeername()
-                self.database.user_login(message[USER][ACCOUNT_NAME] , client_ip , client_port)
+                client_ip, client_port = client.getpeername()
+                self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 send_message(client, RESPONSE_200)
             else:
                 response = RESPONSE_400
@@ -142,11 +143,13 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.clients.remove(client)
                 client.close()
             return
+
         # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
         elif ACTION in message and message[ACTION] == MESSAGE and DESTINATION in message and TIME in message \
                 and SENDER in message and MESSAGE_TEXT in message:
             self.messages.append(message)
             return
+
         # Если клиент выходит
         elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message:
             self.database.user_logout(message[ACCOUNT_NAME])
@@ -154,6 +157,23 @@ class Server(threading.Thread, metaclass=ServerMaker):
             self.names[message[ACCOUNT_NAME]].close()
             del self.names[message[ACCOUNT_NAME]]
             return
+
+        # Если это запрос контакт-листа
+        elif ACTION in message and message[ACTION] == GET_CONTACTS and USER in message:
+            response = RESPONSE_202
+            response[LIST_INFO] = self.database.get_contacts(message[USER])
+            send_message(client, response)
+
+        # Если это добавление контакта
+        elif ACTION in message and message[ACTION] == ADD_CONTACT and ACCOUNT_NAME in message and USER in message:
+            self.database.add_contact(message[USER], message[ACCOUNT_NAME])
+            send_message(client, RESPONSE_200)
+
+        # Если это удаление контакта
+        elif ACTION in message and message[ACTION] == REMOVE_CONTACT and ACCOUNT_NAME in message and USER in message:
+            self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
+            send_message(client, RESPONSE_200)
+
         # Иначе отдаём Bad request
         else:
             response = RESPONSE_400
@@ -200,7 +220,8 @@ def main():
             for user in sorted(database.active_users_list()):
                 print(f'Пользователь {user[0]}, подключен: {user[1]}:{user[2]}, время установки соединения: {user[3]}')
         elif command == 'loghist':
-            name = input('Введите имя пользователя для просмотра истории. Для вывода всей истории, просто нажмите Enter: ')
+            name = input(
+                'Введите имя пользователя для просмотра истории. Для вывода всей истории, просто нажмите Enter: ')
             for user in sorted(database.login_history(name)):
                 print(f'Пользователь: {user[0]} время входа: {user[1]}. Вход с: {user[2]}:{user[3]}')
         else:

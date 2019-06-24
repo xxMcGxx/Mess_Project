@@ -31,6 +31,13 @@ class ServerStorage:
             self.ip = ip
             self.port = port
 
+    # Класс - отображение таблицы контактов пользователей
+    class UsersContacts:
+        def __init__(self, user, contact):
+            self.id = None
+            self.user = user
+            self.contact = contact
+
     def __init__(self):
         # Создаём движок базы данных
         self.database_engine = create_engine(SERVER_DATABASE, echo=False, pool_recycle=7200)
@@ -63,6 +70,13 @@ class ServerStorage:
                                    Column('port', String)
                                    )
 
+        # Создаём таблицу контактов пользователей
+        contacts = Table('Contacts', self.metadata,
+                         Column('id', Integer, primary_key=True),
+                         Column('user', ForeignKey('Users.id')),
+                         Column('contact', ForeignKey('Users.id'))
+                         )
+
         # Создаём таблицы
         self.metadata.create_all(self.database_engine)
 
@@ -70,6 +84,7 @@ class ServerStorage:
         mapper(self.AllUsers, users_table)
         mapper(self.ActiveUsers, active_users_table)
         mapper(self.LoginHistory, user_login_history)
+        mapper(self.UsersContacts, contacts)
 
         # Создаём сессию
         Session = sessionmaker(bind=self.database_engine)
@@ -117,13 +132,45 @@ class ServerStorage:
         # Применяем изменения
         self.session.commit()
 
+    # Функция добавляет контакт для пользователя.
+    def add_contact(self, user, contact):
+        # Получаем ID пользователей
+        user = self.session.query(self.AllUsers).filter_by(name=user).first()
+        contact = self.session.query(self.AllUsers).filter_by(name=contact).first()
+
+        # Проверяем что не дубль и что контакт может существовать (полю пользователь мы доверяем)
+        if not contact or self.session.query(self.UsersContacts).filter_by(user=user.id, contact=contact.id).count():
+            return
+
+        # Создаём объект и заносим его в базу
+        contact_row = self.UsersContacts(user.id, contact.id)
+        self.session.add(contact_row)
+        self.session.commit()
+
+    # Функция удаляет контакт из базы данных
+    def remove_contact(self, user, contact):
+        # Получаем ID пользователей
+        user = self.session.query(self.AllUsers).filter_by(name=user).first()
+        contact = self.session.query(self.AllUsers).filter_by(name=contact).first()
+
+        # Проверяем что контакт может существовать (полю пользователь мы доверяем)
+        if not contact:
+            return
+
+        # Удаляем требуемое
+        print(self.session.query(self.UsersContacts).filter(
+            self.UsersContacts.user == user.id,
+            self.UsersContacts.contact == contact.id
+        ).delete())
+        self.session.commit()
+
     # Функция возвращает список известных пользователей со временем последнего входа.
     def users_list(self):
         # Запрос строк таблицы пользователей.
         query = self.session.query(
             self.AllUsers.name,
             self.AllUsers.last_login
-            )
+        )
         # Возвращаем список кортежей
         return query.all()
 
@@ -153,13 +200,36 @@ class ServerStorage:
         # Возвращаем список кортежей
         return query.all()
 
+    # Функция возвращает список контактов пользователя.
+    def get_contacts(self, username):
+        # Запрашивааем указанного пользователя
+        user = self.session.query(self.AllUsers).filter_by(name=username).one()
+
+        # список контактов
+        list_contacts = []
+
+        # Запрашиваем его список контактов
+        query = self.session.query(self.UsersContacts, self.AllUsers.name). \
+            filter_by(user=user.id). \
+            join(self.AllUsers, self.UsersContacts.contact == self.AllUsers.id)
+
+        # выбираем только имена пользователей
+        for contact in query.all():
+            list_contacts.append(contact[1])
+
+        return list_contacts
+
 
 # Отладка
 if __name__ == '__main__':
     test_db = ServerStorage()
     # test_db.user_login('1111', '192.168.1.113', 8080)
     # test_db.user_login('McG2', '192.168.1.113', 8081)
-    print(test_db.users_list())
+    # print(test_db.users_list())
     # print(test_db.active_users_list())
     # test_db.user_logout('McG')
     # print(test_db.login_history('re'))
+    # test_db.add_contact('test2', 'test1')
+    test_db.add_contact('test1', 'test3')
+    # test_db.add_contact('test1', 'test6')
+    test_db.remove_contact('test1', 'test3')
