@@ -89,25 +89,32 @@ class Server(threading.Thread, metaclass=ServerMaker):
             try:
                 if self.clients:
                     recv_data_lst, send_data_lst, err_lst = select.select(self.clients, self.clients, [], 0)
-            except OSError:
-                pass
+            except OSError as err:
+                logger.error(f'Ошибка работы с сокетами: {err}')
 
             # принимаем сообщения и если ошибка, исключаем клиента.
             if recv_data_lst:
                 for client_with_message in recv_data_lst:
                     try:
                         self.process_client_message(get_message(client_with_message), client_with_message)
-                    except:
+                    except (OSError):
+                        # Ищем клиента в словаре клиентов и удаляем его из него и  базы подключённых
                         logger.info(f'Клиент {client_with_message.getpeername()} отключился от сервера.')
+                        for name in self.names:
+                            if self.names[name] == client_with_message:
+                                self.database.user_logout(name)
+                                del self.names[name]
+                                break
                         self.clients.remove(client_with_message)
 
             # Если есть сообщения, обрабатываем каждое.
             for message in self.messages:
                 try:
                     self.process_message(message, send_data_lst)
-                except:
+                except (ConnectionAbortedError, ConnectionError, ConnectionResetError, ConnectionRefusedError):
                     logger.info(f'Связь с клиентом с именем {message[DESTINATION]} была потеряна')
                     self.clients.remove(self.names[message[DESTINATION]])
+                    self.database.user_logout(message[DESTINATION])
                     del self.names[message[DESTINATION]]
             self.messages.clear()
 
@@ -146,31 +153,36 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
         # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
         elif ACTION in message and message[ACTION] == MESSAGE and DESTINATION in message and TIME in message \
-                and SENDER in message and MESSAGE_TEXT in message:
+                and SENDER in message and MESSAGE_TEXT in message and self.names[message[ACCOUNT_NAME]] == client:
             self.messages.append(message)
             return
 
         # Если клиент выходит
-        elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message:
+        elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message \
+                and self.names[message[ACCOUNT_NAME]] == client:
             self.database.user_logout(message[ACCOUNT_NAME])
+            logger.info(f'Клиент {message[ACCOUNT_NAME]} корректно отключился от сервера.')
             self.clients.remove(self.names[message[ACCOUNT_NAME]])
             self.names[message[ACCOUNT_NAME]].close()
             del self.names[message[ACCOUNT_NAME]]
             return
 
         # Если это запрос контакт-листа
-        elif ACTION in message and message[ACTION] == GET_CONTACTS and USER in message:
+        elif ACTION in message and message[ACTION] == GET_CONTACTS and USER in message and \
+                self.names[message[USER]] == client:
             response = RESPONSE_202
             response[LIST_INFO] = self.database.get_contacts(message[USER])
             send_message(client, response)
 
         # Если это добавление контакта
-        elif ACTION in message and message[ACTION] == ADD_CONTACT and ACCOUNT_NAME in message and USER in message:
+        elif ACTION in message and message[ACTION] == ADD_CONTACT and ACCOUNT_NAME in message and USER in message \
+                and self.names[message[USER]] == client:
             self.database.add_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
 
         # Если это удаление контакта
-        elif ACTION in message and message[ACTION] == REMOVE_CONTACT and ACCOUNT_NAME in message and USER in message:
+        elif ACTION in message and message[ACTION] == REMOVE_CONTACT and ACCOUNT_NAME in message and USER in message \
+                and self.names[message[USER]] == client:
             self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
 

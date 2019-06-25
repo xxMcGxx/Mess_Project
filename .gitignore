@@ -2,3 +2,4 @@
 /__pycache__/
 /logs/__pycache__/
 *.log
+*.db3
