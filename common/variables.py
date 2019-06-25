@@ -14,6 +14,8 @@ ENCODING = 'utf-8'
 LOGGING_LEVEL = logging.DEBUG
 # База данных для хранения данных сервера:
 SERVER_DATABASE = 'sqlite:///server_base.db3'
+# База данных клиента
+CLIENT_DATABASE = 'sqlite:///client_base.db3'
 
 # Прококол JIM основные ключи:
 ACTION = 'action'

@@ -205,19 +205,13 @@ class ServerStorage:
         # Запрашивааем указанного пользователя
         user = self.session.query(self.AllUsers).filter_by(name=username).one()
 
-        # список контактов
-        list_contacts = []
-
         # Запрашиваем его список контактов
         query = self.session.query(self.UsersContacts, self.AllUsers.name). \
             filter_by(user=user.id). \
             join(self.AllUsers, self.UsersContacts.contact == self.AllUsers.id)
 
-        # выбираем только имена пользователей
-        for contact in query.all():
-            list_contacts.append(contact[1])
-
-        return list_contacts
+        # выбираем только имена пользователей и возвращаем их.
+        return [contact[1] for contact in query.all()]
 
 
 # Отладка
