@@ -3,3 +3,4 @@
 /logs/__pycache__/
 *.log
 *.db3
+*.db3-journal

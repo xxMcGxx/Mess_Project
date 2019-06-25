@@ -149,9 +149,11 @@ class ClientSender(threading.Thread, metaclass=ClientMaker):
         ans = input('Для удаления введите del, для добавления add: ')
         if ans == 'del':
             edit = input('Введите имя удаляемного контакта: ')
-            # сделать проверку на сущестрование и удаление контакта из базы.
             with database_lock:
-                pass
+                if self.database.check_contact(edit):
+                    self.database.del_contact(edit)
+                else:
+                    logger.error('Попытка удаления несуществующего контакта.')
         elif ans == 'add':
             # Проверка на возможность такого контакта
             edit = input('Введите имя создаваемого контакта: ')

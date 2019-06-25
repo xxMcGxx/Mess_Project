@@ -82,6 +82,10 @@ class ClientDatabase:
             self.session.add(contact_row)
             self.session.commit()
 
+    # Функция удаления контакта
+    def del_contact(self, contact):
+        self.session.query(self.Contacts).filter_by(name=contact).delete()
+
     # Функция добавления известных пользователей.
     # Пользователи получаются только с сервера, поэтому таблица очищается.
     def add_users(self, users_list):
@@ -108,6 +112,13 @@ class ClientDatabase:
     # Функция проверяющяя наличие пользователя в известных
     def check_user(self, user):
         if self.session.query(self.KnownUsers).filter_by(username=user).count():
+            return True
+        else:
+            return False
+
+    # Функция проверяющяя наличие пользователя контактах
+    def check_contact(self, contact):
+        if self.session.query(self.Contacts).filter_by(name=contact).count():
             return True
         else:
             return False
@@ -139,3 +150,5 @@ if __name__ == '__main__':
     print(test_db.get_history('test2'))
     print(test_db.get_history(to_who='test2'))
     print(test_db.get_history('test3'))
+    test_db.del_contact('test4')
+    print(test_db.get_contacts())
