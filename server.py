@@ -153,7 +153,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
         # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
         elif ACTION in message and message[ACTION] == MESSAGE and DESTINATION in message and TIME in message \
-                and SENDER in message and MESSAGE_TEXT in message and self.names[message[ACCOUNT_NAME]] == client:
+                and SENDER in message and MESSAGE_TEXT in message and self.names[message[SENDER]] == client:
             self.messages.append(message)
             return
 
@@ -185,6 +185,13 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 and self.names[message[USER]] == client:
             self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
+
+        # Если это запрос известных пользователей
+        elif ACTION in message and message[ACTION] == USERS_REQUEST and ACCOUNT_NAME in message \
+            and self.names[message[ACCOUNT_NAME]] == client:
+            response = RESPONSE_202
+            response[LIST_INFO] = [user[0] for user in self.database.users_list()]
+            send_message(client,response)
 
         # Иначе отдаём Bad request
         else:

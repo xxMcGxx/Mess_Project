@@ -14,8 +14,6 @@ ENCODING = 'utf-8'
 LOGGING_LEVEL = logging.DEBUG
 # База данных для хранения данных сервера:
 SERVER_DATABASE = 'sqlite:///server_base.db3'
-# База данных клиента
-CLIENT_DATABASE = 'sqlite:///client_base.db3'
 
 # Прококол JIM основные ключи:
 ACTION = 'action'
@@ -36,6 +34,7 @@ GET_CONTACTS = 'get_contacts'
 LIST_INFO = 'data_list'
 REMOVE_CONTACT = 'remove'
 ADD_CONTACT = 'add'
+USERS_REQUEST = 'get_users'
 
 # Словари - ответы:
 # 200
