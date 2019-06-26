@@ -38,9 +38,19 @@ class ServerStorage:
             self.user = user
             self.contact = contact
 
-    def __init__(self):
+    # Класс отображение таблицы истории действий
+    class UsersHistory:
+        def __init__(self, user):
+            self.id = None
+            self.user = user
+            self.sent = 0
+            self.accepted = 0
+
+    def __init__(self , path):
         # Создаём движок базы данных
-        self.database_engine = create_engine(SERVER_DATABASE, echo=False, pool_recycle=7200)
+        print(path)
+        self.database_engine = create_engine(f'sqlite:///{path}', echo=False, pool_recycle=7200,
+                                             connect_args={'check_same_thread': False})
 
         # Создаём объект MetaData
         self.metadata = MetaData()
@@ -77,6 +87,14 @@ class ServerStorage:
                          Column('contact', ForeignKey('Users.id'))
                          )
 
+        # Создаём таблицу истории пользователей
+        users_history_table = Table('History', self.metadata,
+                                    Column('id', Integer, primary_key=True),
+                                    Column('user', ForeignKey('Users.id')),
+                                    Column('sent', Integer),
+                                    Column('accepted', Integer)
+                                    )
+
         # Создаём таблицы
         self.metadata.create_all(self.database_engine)
 
@@ -85,6 +103,7 @@ class ServerStorage:
         mapper(self.ActiveUsers, active_users_table)
         mapper(self.LoginHistory, user_login_history)
         mapper(self.UsersContacts, contacts)
+        mapper(self.UsersHistory, users_history_table)
 
         # Создаём сессию
         Session = sessionmaker(bind=self.database_engine)
@@ -109,6 +128,8 @@ class ServerStorage:
             self.session.add(user)
             # Комит здесь нужен, чтобы присвоился ID
             self.session.commit()
+            user_in_history = self.UsersHistory(user.id)
+            self.session.add(user_in_history)
 
         # Теперь можно создать запись в таблицу активных пользователей о факте входа.
         new_active_user = self.ActiveUsers(user.id, ip_address, port, datetime.datetime.now())
@@ -130,6 +151,19 @@ class ServerStorage:
         self.session.query(self.ActiveUsers).filter_by(user=user.id).delete()
 
         # Применяем изменения
+        self.session.commit()
+
+    # Функция фиксирует передачу сообщения и делает соответствующие отметки в БД
+    def process_message(self, sender, recipient):
+        # Получаем ID отправителя и получателя
+        sender = self.session.query(self.AllUsers).filter_by(name=sender).first().id
+        recipient = self.session.query(self.AllUsers).filter_by(name=recipient).first().id
+        # Запрашиваем строки из истории и увеличиваем счётчики
+        sender_row = self.session.query(self.UsersHistory).filter_by(user=sender).first()
+        sender_row.sent += 1
+        recipient_row = self.session.query(self.UsersHistory).filter_by(user=recipient).first()
+        recipient_row.accepted += 1
+
         self.session.commit()
 
     # Функция добавляет контакт для пользователя.
@@ -213,17 +247,30 @@ class ServerStorage:
         # выбираем только имена пользователей и возвращаем их.
         return [contact[1] for contact in query.all()]
 
+    # Функция возвращает количество переданных и полученных сообщений
+    def message_history(self):
+        query = self.session.query(
+            self.AllUsers.name,
+            self.AllUsers.last_login,
+            self.UsersHistory.sent,
+            self.UsersHistory.accepted
+        ).join(self.AllUsers)
+        # Возвращаем список кортежей
+        return query.all()
+
 
 # Отладка
 if __name__ == '__main__':
     test_db = ServerStorage()
-    # test_db.user_login('1111', '192.168.1.113', 8080)
-    # test_db.user_login('McG2', '192.168.1.113', 8081)
-    # print(test_db.users_list())
+    test_db.user_login('1111', '192.168.1.113', 8080)
+    test_db.user_login('McG2', '192.168.1.113', 8081)
+    print(test_db.users_list())
     # print(test_db.active_users_list())
     # test_db.user_logout('McG')
     # print(test_db.login_history('re'))
     # test_db.add_contact('test2', 'test1')
-    test_db.add_contact('test1', 'test3')
+    # test_db.add_contact('test1', 'test3')
     # test_db.add_contact('test1', 'test6')
-    test_db.remove_contact('test1', 'test3')
+    # test_db.remove_contact('test1', 'test3')
+    test_db.process_message('McG2', '1111')
+    print(test_db.message_history())
