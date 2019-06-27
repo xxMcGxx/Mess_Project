@@ -12,6 +12,9 @@ from errors import IncorrectDataRecivedError, ReqFieldMissingError, ServerError
 from decos import log
 from metaclasses import ClientMaker
 from client_database import ClientDatabase
+from PyQt5.QtWidgets import QApplication, QMainWindow , qApp
+from client_gui_conv import Ui_MainClientWindow
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 # Инициализация клиентского логера
 logger = logging.getLogger('client')
@@ -59,7 +62,7 @@ class ClientSender(threading.Thread, metaclass=ClientMaker):
 
         # Сохраняем сообщения для истории
         with database_lock:
-            self.database.save_message(self.account_name , to , message)
+            self.database.save_message(self.account_name, to, message)
 
         # Необходимо дождаться освобождения сокета для отправки сообщения
         with sock_lock:
@@ -162,14 +165,9 @@ class ClientSender(threading.Thread, metaclass=ClientMaker):
                     self.database.add_contact(edit)
                 with sock_lock:
                     try:
-                        add_contact(self.sock , self.account_name, edit)
+                        add_contact(self.sock, self.account_name, edit)
                     except ServerError:
                         logger.error('Не удалось отправить информацию на сервер.')
-
-
-
-
-
 
 
 # Класс-приёмник сообщений с сервера. Принимает сообщения, выводит в консоль , сохраняет в базу.
@@ -357,6 +355,53 @@ def database_load(sock, database, username):
             database.add_contact(contact)
 
 
+# Функция отправляющая сообщение о завершении работы.
+def client_exit(sock, name):
+    message = {
+        ACTION: EXIT,
+        TIME: time.time(),
+        ACCOUNT_NAME: name
+    }
+    with sock_lock:
+        try:
+            send_message(sock, message)
+        except:
+            pass
+        print('Завершение соединения.')
+        logger.info('Завершение работы по команде пользователя.')
+        time.sleep(1)
+
+
+# Класс основного окна
+class ClientMainWindow(QMainWindow):
+    def __init__(self , database):
+        super().__init__()
+        self.database = database
+
+        # Загружаем конфигурацию окна из дизайнера
+        self.ui = Ui_MainClientWindow()
+        self.ui.setupUi(self)
+
+        # Кнопка "Выход"
+        self.ui.menu_exit.triggered.connect(qApp.exit)
+
+        self.clients_list_update()
+
+        self.show()
+
+    def clients_list_update(self):
+        with database_lock:
+            contacts_list = self.database.get_contacts()
+        model = QStandardItemModel()
+        for i in contacts_list:
+            item = QStandardItem(i)
+            item.setEditable(False)
+            model.appendRow(item)
+            print(i)
+        self.ui.list_contacts.setModel(model)
+
+
+
 def main():
     # Сообщаем о запуске
     print('Консольный месседжер. Клиентский модуль.')
@@ -366,7 +411,8 @@ def main():
 
     # Если имя пользователя не было задано, необходимо запросить пользователя.
     if not client_name:
-        client_name = input('Введите имя пользователя: ')
+        # client_name = input('Введите имя пользователя: ')
+        client_name = 'test1'
     else:
         print(f'Клиентский модуль запущен с именем: {client_name}')
 
@@ -403,25 +449,28 @@ def main():
         # Инициализация БД
         database = ClientDatabase(client_name)
         database_load(transport, database, client_name)
-
+        ''' - удалить весь код этого потока после доделывания GUI
         # Если соединение с сервером установлено корректно, запускаем поток взаимодействия с пользователем
         module_sender = ClientSender(client_name, transport, database)
         module_sender.daemon = True
         module_sender.start()
-        logger.debug('Запущены процессы')
+        logger.debug('Запущены процессы')'''
 
-        # затем запускаем поток - приёмник сообщений.
+        # запускаем поток - приёмник сообщений.
         module_receiver = ClientReader(client_name, transport, database)
         module_receiver.daemon = True
         module_receiver.start()
 
-        # Watchdog основной цикл, если один из потоков завершён, то значит или потеряно соединение или пользователь
-        # ввёл exit. Поскольку все события обработываются в потоках, достаточно просто завершить цикл.
-        while True:
-            time.sleep(1)
-            if module_receiver.is_alive() and module_sender.is_alive():
-                continue
-            break
+        # Запускаем графическую оболочку клиента
+        client = QApplication(sys.argv)
+
+        clinent_main_windows = ClientMainWindow(database)
+
+        # Запуск графической оболочки
+        client.exec_()
+
+        # после закрытия графического интерфейса необходимо выключить приёмник и сообщить серверу о нашем уходе
+        client_exit(transport, client_name)
 
 
 if __name__ == '__main__':

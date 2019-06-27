@@ -79,6 +79,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
     def run(self):
         # Инициализация Сокета
+        global new_connection
         self.init_socket()
 
         # Основной цикл программы сервера
@@ -116,6 +117,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                                 del self.names[name]
                                 break
                         self.clients.remove(client_with_message)
+                        with conflag_lock:
+                            new_connection = True
 
             # Если есть сообщения, обрабатываем каждое.
             for message in self.messages:
@@ -126,6 +129,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                     self.clients.remove(self.names[message[DESTINATION]])
                     self.database.user_logout(message[DESTINATION])
                     del self.names[message[DESTINATION]]
+                    with conflag_lock:
+                        new_connection = True
             self.messages.clear()
 
     # Функция адресной отправки сообщения определённому клиенту. Принимает словарь сообщение, список зарегистрированых
@@ -220,7 +225,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
 def main():
     # Загрузка файла конфигурации сервера
     config = configparser.ConfigParser()
-    config.read('server.ini')
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    config.read(f"{dir_path}/{'server.ini'}")
 
     # Загрузка параметров командной строки, если нет параметров, то задаём значения по умоланию.
     listen_address, listen_port = arg_parser(config['SETTINGS']['Default_port'], config['SETTINGS']['Listen_Address'])
@@ -290,9 +296,9 @@ def main():
                 print(port)
                 with open('server.ini', 'w') as conf:
                     config.write(conf)
-                    message.information(config_window , 'OK' , 'Настройки успешно сохранены!')
+                    message.information(config_window, 'OK', 'Настройки успешно сохранены!')
             else:
-                message.warning(config_window , 'Ошибка' , 'Порт должен быть от 1024 до 65536')
+                message.warning(config_window, 'Ошибка', 'Порт должен быть от 1024 до 65536')
 
     # Таймер, обновляющий список клиентов 1 раз в секунду
     timer = QTimer()
