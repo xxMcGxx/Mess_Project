@@ -15,6 +15,7 @@ from client_database import ClientDatabase
 from PyQt5.QtWidgets import QApplication, QMainWindow , qApp
 from client_gui_conv import Ui_MainClientWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from client_gui import SelectContact
 
 # Инициализация клиентского логера
 logger = logging.getLogger('client')
@@ -385,6 +386,10 @@ class ClientMainWindow(QMainWindow):
         # Кнопка "Выход"
         self.ui.menu_exit.triggered.connect(qApp.exit)
 
+        # "добавить контакт"
+        self.ui.btn_add_contact.clicked.connect(self.add_contact)
+        self.ui.menu_add_contact.triggered.connect(self.add_contact)
+
         self.clients_list_update()
 
         self.show()
@@ -392,13 +397,23 @@ class ClientMainWindow(QMainWindow):
     def clients_list_update(self):
         with database_lock:
             contacts_list = self.database.get_contacts()
-        model = QStandardItemModel()
-        for i in contacts_list:
+        self.contacts_model = QStandardItemModel()
+        for i in sorted(contacts_list):
             item = QStandardItem(i)
             item.setEditable(False)
-            model.appendRow(item)
+            self.contacts_model.appendRow(item)
+        self.ui.list_contacts.setModel(self.contacts_model)
+
+
+    def add_contact(self):
+        self.select_dialog = SelectContact()
+        with database_lock:
+            contacts_list = set(self.database.get_contacts())
+            users_list = set(self.database.get_users())
+        for i in users_list - contacts_list:
             print(i)
-        self.ui.list_contacts.setModel(model)
+        self.select_dialog.selector.setModel()
+        self.select_dialog.show()
 
 
 
@@ -464,10 +479,12 @@ def main():
         # Запускаем графическую оболочку клиента
         client = QApplication(sys.argv)
 
-        clinent_main_windows = ClientMainWindow(database)
+        clinent_main_window = ClientMainWindow(database)
 
         # Запуск графической оболочки
         client.exec_()
+        clinent_main_window.add_contact()
+
 
         # после закрытия графического интерфейса необходимо выключить приёмник и сообщить серверу о нашем уходе
         client_exit(transport, client_name)

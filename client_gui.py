@@ -1,24 +1,41 @@
 import sys
-from PyQt5 import QtWidgets
-import client_gui_conv
+from PyQt5.QtWidgets import QApplication, QDialog, QLabel , QComboBox , QPushButton
 
-# Вариант 1. Объект формы - атрибут класса главного окна
-class MyWindow(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
-        self.ui = client_gui_conv.Ui_MainClientWindow()
-        self.ui.setupUi(self)
-        self.ui.btnQuit.clicked.connect(QtWidgets.qApp.quit)
 
-# Вариант 2. Главное окно дополнительно наследуется от класса формы
-class MyWindow_2(QtWidgets.QWidget, client_gui_conv.Ui_MainClientWindow):
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
-        self.ui.setupUi(self)
-        self.ui.btnQuit.clicked.connect(QtWidgets.qApp.quit)
+# Диалог выбора контакта для добавления
+class SelectContact(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setFixedSize(350 , 120)
+        self.setWindowTitle('Выберите контакт для добавления:')
+        self.setModal(True)
+
+        self.selector_label = QLabel('Выберите контакт для добавления:',self)
+        self.selector_label.setFixedSize(200 , 20)
+        self.selector_label.move(10,0)
+
+        self.selector = QComboBox(self)
+        self.selector.setFixedSize(200 , 20)
+        self.selector.move(10, 30)
+
+        self.btn_refresh = QPushButton('Обновить список' , self)
+        self.btn_refresh.setFixedSize(100 , 30)
+        self.btn_refresh.move(60 , 60)
+
+        self.btn_ok = QPushButton('Добавить' , self)
+        self.btn_ok.setFixedSize(100 , 30)
+        self.btn_ok.move(230  , 20)
+
+        self.btn_cancel = QPushButton('Отмена' , self)
+        self.btn_cancel.setFixedSize(100 , 30)
+        self.btn_cancel.move(230  , 60)
+        self.btn_cancel.clicked.connect(self.close)
+
+
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    window = MyWindow()
+    app = QApplication(sys.argv)
+    window = SelectContact()
     window.show()
     sys.exit(app.exec_())
