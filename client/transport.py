@@ -140,6 +140,34 @@ class ClientTransport(threading.Thread):
         else:
             logger.error('Не удалось обновить список известных пользователей.')
 
+    # Функция сообщающая на сервер о добавлении нового контакта
+    def add_contact(self, contact):
+        logger.debug(f'Создание контакта {contact}')
+        req = {
+            ACTION: ADD_CONTACT,
+            TIME: time.time(),
+            USER: self.username,
+            ACCOUNT_NAME: contact
+        }
+        send_message(self.transport, req)
+        self.process_server_ans(get_message(self.transport))
+
+    # Функция удаления клиента на сервере
+    def remove_contact(self, contact):
+        logger.debug(f'Удаление контакта {contact}')
+        req = {
+            ACTION: REMOVE_CONTACT,
+            TIME: time.time(),
+            USER: self.username,
+            ACCOUNT_NAME: contact
+        }
+        send_message(self.transport, req)
+        ans = get_message(self.transport)
+        if RESPONSE in ans and ans[RESPONSE] == 200:
+            pass
+        else:
+            raise ServerError('Ошибка удаления клиента')
+
     # Функция закрытия соединения, отправляет сообщение о выходе.
     def transport_shutdown(self):
         self.running = False

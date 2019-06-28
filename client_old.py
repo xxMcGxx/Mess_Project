@@ -244,67 +244,9 @@ def arg_parser():
     return server_address, server_port, client_name
 
 
-# Функция запрос контакт листа
-
-
-
-# Функция добавления пользователя в контакт лист
-def add_contact(sock, username, contact):
-    logger.debug(f'Создание контакта {contact}')
-    req = {
-        ACTION: ADD_CONTACT,
-        TIME: time.time(),
-        USER: username,
-        ACCOUNT_NAME: contact
-    }
-    send_message(sock, req)
-    ans = get_message(sock)
-    if RESPONSE in ans and ans[RESPONSE] == 200:
-        pass
-    else:
-        raise ServerError('Ошибка создания контакта')
-    print('Удачное создание контакта.')
-
-
-# Функция запроса списка известных пользователей
-
-
 
 # Функция удаления пользователя из контакт листа
-def remove_contact(sock, username, contact):
-    logger.debug(f'Создание контакта {contact}')
-    req = {
-        ACTION: REMOVE_CONTACT,
-        TIME: time.time(),
-        USER: username,
-        ACCOUNT_NAME: contact
-    }
-    send_message(sock, req)
-    ans = get_message(sock)
-    if RESPONSE in ans and ans[RESPONSE] == 200:
-        pass
-    else:
-        raise ServerError('Ошибка удаления клиента')
-    print('Удачное удаление')
 
-
-
-
-# Функция отправляющая сообщение о завершении работы.
-def client_exit(sock, name):
-    message = {
-        ACTION: EXIT,
-        TIME: time.time(),
-        ACCOUNT_NAME: name
-    }
-    with sock_lock:
-        try:
-            send_message(sock, message)
-        except:
-            pass
-        print('Завершение соединения.')
-        logger.info('Завершение работы по команде пользователя.')
-        time.sleep(1)
 
 
 

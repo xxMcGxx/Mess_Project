@@ -1,15 +1,21 @@
-from PyQt5.QtWidgets import QMainWindow, qApp
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 import sys
+import json
+import logging
 
 sys.path.append('../')
 from client.main_window_conv import Ui_MainClientWindow
 from client.add_contact import AddContactDialog
+from client.del_contact import DelContactDialog
+from common.errors import ServerError
+
+logger = logging.getLogger('client')
 
 
 # Класс основного окна
 class ClientMainWindow(QMainWindow):
-    def __init__(self, database , transport):
+    def __init__(self, database, transport):
         super().__init__()
         self.database = database
         self.transport = transport
@@ -22,11 +28,16 @@ class ClientMainWindow(QMainWindow):
         self.ui.menu_exit.triggered.connect(qApp.exit)
 
         # "добавить контакт"
-        self.ui.btn_add_contact.clicked.connect(self.add_contact)
-        self.ui.menu_add_contact.triggered.connect(self.add_contact)
+        self.ui.btn_add_contact.clicked.connect(self.add_contact_window)
+        self.ui.menu_add_contact.triggered.connect(self.add_contact_window)
+
+        # Удалить контакт
+        self.ui.btn_remove_contact.clicked.connect(self.delete_contact_window)
+        self.ui.menu_del_contact.triggered.connect(self.delete_contact_window)
 
         # Дополнительные требующиеся атрибуты
         self.contacts_model = None
+        self.messages = QMessageBox()
 
         self.clients_list_update()
 
@@ -43,33 +54,51 @@ class ClientMainWindow(QMainWindow):
         self.ui.list_contacts.setModel(self.contacts_model)
 
     # Функция добавления контакта
-    def add_contact(self):
+    def add_contact_window(self):
         global select_dialog
-        select_dialog = AddContactDialog()
-
-        # Заполняем список возможных контактов разницей между всеми пользователями и
-        def possible_contacts_update(window, base):
-            # множества всех контактов и контактов клиента
-            contacts_list = set(base.get_contacts())
-            users_list = set(base.get_users())
-            # составляем модель из разницы данных множеств
-            possible_contacts_model = QStandardItemModel()
-            for user in users_list - contacts_list:
-                user = QStandardItem(user)
-                user.setEditable(False)
-                possible_contacts_model.appendRow(user)
-            window.selector.setModel(possible_contacts_model)
-
-        possible_contacts_update(select_dialog, self.database)
-
-        # Обновлялка возможных контактов. Обновляет таблицу известных пользователей,
-        # затем содержимое предполагаемых контактов
-        def update_possible_contacts(self):
-            try:
-                users_list = user_list_request(sock, username)
-            except ServerError:
-                logger.error('Ошибка запроса списка известных пользователей.')
-            else:
-                database.add_users(users_list)
-
+        select_dialog = AddContactDialog(self.transport, self.database)
+        select_dialog.btn_ok.clicked.connect(lambda: self.add_contact(select_dialog))
         select_dialog.show()
+
+    # Функция - обработчик добавления, сообщает серверу, обновляет таблицу и список контактов
+    def add_contact(self, item):
+        new_contact = item.selector.currentText()
+        try:
+            self.transport.add_contact(new_contact)
+        except ServerError as err:
+            self.messages.critical(self, 'Ошибка сервера', err.text)
+        except OSError as err:
+            if err.errno:
+                self.messages.critical(self, 'Ошибка', 'Потеряно соединение с сервером!')
+            self.messages.critical(self, 'Ошибка', 'Таймаут соединения!')
+        else:
+            self.database.add_contact(new_contact)
+            self.contacts_model.appendRow(QStandardItem(new_contact))
+            logger.info(f'Успешно добавлен контакт {new_contact}')
+            self.messages.information(self, 'Успех', 'Контакт успешно добавлен.')
+            item.close()
+
+    # Функция удаления контакта
+    def delete_contact_window(self):
+        global remove_dialog
+        remove_dialog = DelContactDialog(self.database)
+        remove_dialog.btn_ok.clicked.connect(lambda: self.delete_contact(remove_dialog))
+        remove_dialog.show()
+
+    # Функция обработчик удаления контакта, сообщает на сервер, обновляет таблицу контактов
+    def delete_contact(self, item):
+        selected = item.selector.currentText()
+        try:
+            self.transport.remove_contact(selected)
+        except ServerError as err:
+            self.messages.critical(self, 'Ошибка сервера', err.text)
+        except OSError as err:
+            if err.errno:
+                self.messages.critical(self, 'Ошибка', 'Потеряно соединение с сервером!')
+            self.messages.critical(self, 'Ошибка', 'Таймаут соединения!')
+        else:
+            self.database.del_contact(selected)
+            self.clients_list_update()
+            logger.info(f'Успешно удалён контакт {selected}')
+            self.messages.information(self, 'Успех', 'Контакт успешно удалён.')
+            item.close()
