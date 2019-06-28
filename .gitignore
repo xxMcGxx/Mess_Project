@@ -4,3 +4,4 @@
 *.log
 *.db3
 *.db3-journal
+/client/__pycache__/

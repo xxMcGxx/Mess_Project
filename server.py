@@ -9,10 +9,10 @@ import time
 import threading
 import configparser
 import logs.config_server_log
-from errors import IncorrectDataRecivedError
+from common.errors import IncorrectDataRecivedError
 from common.variables import *
 from common.utils import *
-from decos import log
+from common.decos import log
 from descryptors import Port
 from metaclasses import ServerMaker
 from server_database import ServerStorage

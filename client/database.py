@@ -1,5 +1,8 @@
 from sqlalchemy import create_engine, Table, Column, Integer, String, Text, MetaData, DateTime
 from sqlalchemy.orm import mapper, sessionmaker
+import os
+import sys
+sys.path.append('../')
 from common.variables import *
 import datetime
 
@@ -32,7 +35,9 @@ class ClientDatabase:
         # Создаём движок базы данных, поскольку разрешено несколько клиентов одновременно, каждый должен иметь свою БД
         # Поскольку клиент мультипоточный необходимо отключить проверки на подключения с разных потоков,
         # иначе sqlite3.ProgrammingError
-        self.database_engine = create_engine(f'sqlite:///client_{name}.db3', echo=False, pool_recycle=7200,
+        path = os.path.dirname(os.path.realpath(__file__))
+        filename = f'client_{name}.db3'
+        self.database_engine = create_engine(f'sqlite:///{os.path.join(path, filename)}', echo=False, pool_recycle=7200,
                                              connect_args={'check_same_thread': False})
 
         # Создаём объект MetaData
@@ -137,12 +142,12 @@ class ClientDatabase:
 # отладка
 if __name__ == '__main__':
     test_db = ClientDatabase('test1')
-    for i in ['test3', 'test4', 'test5']:
-        test_db.add_contact(i)
-    test_db.add_contact('test4')
-    test_db.add_users(['test1', 'test2', 'test3', 'test4', 'test5'])
-    test_db.save_message('test1', 'test2', f'Привет! я тестовое сообщение от {datetime.datetime.now()}!')
-    test_db.save_message('test2', 'test1', f'Привет! я другое тестовое сообщение от {datetime.datetime.now()}!')
+    #for i in ['test3', 'test4', 'test5']:
+    #    test_db.add_contact(i)
+    #test_db.add_contact('test4')
+    #test_db.add_users(['test1', 'test2', 'test3', 'test4', 'test5'])
+    #test_db.save_message('test1', 'test2', f'Привет! я тестовое сообщение от {datetime.datetime.now()}!')
+    #test_db.save_message('test2', 'test1', f'Привет! я другое тестовое сообщение от {datetime.datetime.now()}!')
     print(test_db.get_contacts())
     print(test_db.get_users())
     print(test_db.check_user('test1'))
@@ -150,5 +155,5 @@ if __name__ == '__main__':
     print(test_db.get_history('test2'))
     print(test_db.get_history(to_who='test2'))
     print(test_db.get_history('test3'))
-    test_db.del_contact('test4')
+    #test_db.del_contact('test4')
     print(test_db.get_contacts())
