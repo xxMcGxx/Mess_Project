@@ -70,6 +70,7 @@ if __name__ == '__main__':
     # Создаём GUI
     client_app = QApplication(sys.argv)
     main_window = ClientMainWindow(database , transport)
+    main_window.make_connection(transport)
     client_app.exec_()
 
     # Раз графическая оболочка закрылась, закрываем транспорт

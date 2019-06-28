@@ -4,6 +4,7 @@ import time
 import logging
 import json
 import threading
+from PyQt5.QtCore import pyqtSignal , QObject
 
 sys.path.append('../')
 from common.utils import *
@@ -16,10 +17,14 @@ socket_lock = threading.Lock()
 
 
 # Класс - Траннспорт, отвечает за взаимодействие с сервером
-class ClientTransport(threading.Thread):
+class ClientTransport(threading.Thread , QObject):
+    # Тестовый сигнал
+    new_message = pyqtSignal(int)
+
     def __init__(self, port, ip_address, database, username):
         # Вызываем конструктор предка
-        super().__init__()
+        threading.Thread.__init__(self)
+        QObject.__init__(self)
 
         # Класс База данных - работа с базой
         self.database = database
@@ -185,6 +190,9 @@ class ClientTransport(threading.Thread):
         time.sleep(0.5)
 
     def run(self):
+        i = 0
         while self.running:
             print('Выспался')
             time.sleep(3)
+            i += 1
+            self.new_message.emit(i)

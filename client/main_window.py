@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtCore import pyqtSlot
 import sys
 import json
 import logging
@@ -102,3 +103,11 @@ class ClientMainWindow(QMainWindow):
             logger.info(f'Успешно удалён контакт {selected}')
             self.messages.information(self, 'Успех', 'Контакт успешно удалён.')
             item.close()
+
+    @pyqtSlot(int)
+    def message(self , i):
+        print(i)
+
+    def make_connection(self , trans_obj):
+        trans_obj.new_message.connect(self.message)
+
