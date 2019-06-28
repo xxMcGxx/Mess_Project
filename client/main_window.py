@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication, QListView
+from PyQt5.QtGui import QStandardItemModel, QStandardItem , QBrush , QColor
+from PyQt5.QtCore import pyqtSlot, QEvent , Qt
 import sys
 import json
 import logging
@@ -38,13 +38,74 @@ class ClientMainWindow(QMainWindow):
 
         # Дополнительные требующиеся атрибуты
         self.contacts_model = None
+        self.history_model = None
         self.messages = QMessageBox()
+        self.current_chat = None
+        self.ui.list_messages.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Даблклик по листу контактов отправляется в обработчик
+        self.ui.list_contacts.doubleClicked.connect(self.select_active_user)
 
         self.clients_list_update()
-
+        self.set_disabled_input()
         self.show()
 
-    # Функция обновляющяя контакт ликт
+    # Деактивировать поля ввода
+    def set_disabled_input(self):
+        # Надпись  - получатель.
+        self.ui.label_new_message.setText('Для выбора получателя дважды кликните на нем в окне контактов.')
+        self.ui.text_message.clear()
+        if self.history_model:
+            self.history_model.clear()
+
+        # Поле ввода и кнопка отправки неактивны до выбора получателя.
+        self.ui.btn_clear.setDisabled(True)
+        self.ui.btn_send.setDisabled(True)
+        self.ui.text_message.setDisabled(True)
+
+    # Заполняем историю сообщений.
+    def history_list_update(self):
+        # Получаем историю сортированную по дате
+        list = sorted(self.database.get_history(self.current_chat), key=lambda item: item[3])
+        # Если модель не создана, создадим.
+        if not self.history_model:
+            self.history_model = QStandardItemModel()
+            self.ui.list_messages.setModel(self.history_model)
+        # Очистим от старых записей
+        self.history_model.clear()
+        # Берём не более 20 последних записей.
+        length = len(list)
+        if length > 20:
+            length = 20
+        # Заполнение модели записсями, так-же стоит разделить входящие и исходящие выравниванием и разным фоном.
+        for i in range(length):
+            if list[i][1] == 'in':
+                mess = QStandardItem(f'Входящее от {list[i][3].replace(microsecond=0)}:\n {list[i][2]}')
+                mess.setEditable(False)
+                mess.setBackground(QBrush(QColor(255 , 213 , 213)))
+                mess.setTextAlignment(Qt.AlignLeft)
+                self.history_model.appendRow(mess)
+            else:
+                mess = QStandardItem(f'Исходящее от {list[i][3].replace(microsecond=0)}:\n {list[i][2]}')
+                mess.setEditable(False)
+                mess.setTextAlignment(Qt.AlignRight)
+                mess.setBackground(QBrush(QColor(204, 255, 204)))
+                self.history_model.appendRow(mess)
+
+    # Функция устанавливает текущего собеседника
+    def select_active_user(self):
+        # Выбранный пользователем (даблклик) находится в выделеном элементе в QListView
+        self.current_chat = self.ui.list_contacts.currentIndex().data()
+        # Ставим надпись и активируем кнопки
+        self.ui.label_new_message.setText(f'Введите сообщенние для {self.current_chat}:')
+        self.ui.btn_clear.setDisabled(False)
+        self.ui.btn_send.setDisabled(False)
+        self.ui.text_message.setDisabled(False)
+
+        # Заполняем окно историю сообщений по требуемому пользователю.
+        self.history_list_update()
+
+    # Функция обновляющяя контакт лист
     def clients_list_update(self):
         contacts_list = self.database.get_contacts()
         self.contacts_model = QStandardItemModel()
@@ -74,7 +135,9 @@ class ClientMainWindow(QMainWindow):
             self.messages.critical(self, 'Ошибка', 'Таймаут соединения!')
         else:
             self.database.add_contact(new_contact)
-            self.contacts_model.appendRow(QStandardItem(new_contact))
+            new_contact = QStandardItem(new_contact)
+            new_contact.setEditable(False)
+            self.contacts_model.appendRow(new_contact)
             logger.info(f'Успешно добавлен контакт {new_contact}')
             self.messages.information(self, 'Успех', 'Контакт успешно добавлен.')
             item.close()
@@ -103,11 +166,14 @@ class ClientMainWindow(QMainWindow):
             logger.info(f'Успешно удалён контакт {selected}')
             self.messages.information(self, 'Успех', 'Контакт успешно удалён.')
             item.close()
+            # Если удалён активный пользователь, то деактивируем поля ввода.
+            if selected == self.current_chat:
+                self.current_chat = None
+                self.set_disabled_input()
 
     @pyqtSlot(int)
-    def message(self , i):
+    def message(self, i):
         print(i)
 
-    def make_connection(self , trans_obj):
+    def make_connection(self, trans_obj):
         trans_obj.new_message.connect(self.message)
-
