@@ -9,7 +9,6 @@ import time
 import threading
 import configparser
 import logs.config_server_log
-from common.errors import IncorrectDataRecivedError
 from common.variables import *
 from common.utils import *
 from common.decos import log
@@ -169,11 +168,17 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 client.close()
             return
 
-        # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
+        # Если это сообщение, то добавляем его в очередь сообщений. проверяем наличие в сети. и отвечаем.
         elif ACTION in message and message[ACTION] == MESSAGE and DESTINATION in message and TIME in message \
                 and SENDER in message and MESSAGE_TEXT in message and self.names[message[SENDER]] == client:
-            self.messages.append(message)
-            self.database.process_message(message[SENDER], message[DESTINATION])
+            if message[DESTINATION] in self.names:
+                self.messages.append(message)
+                self.database.process_message(message[SENDER], message[DESTINATION])
+                send_message(client, RESPONSE_200)
+            else:
+                response = RESPONSE_400
+                response[ERROR] = 'Пользователь не зарегистрирован на сервере.'
+                send_message(client, response)
             return
 
         # Если клиент выходит

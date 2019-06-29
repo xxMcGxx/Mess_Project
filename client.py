@@ -10,10 +10,11 @@ from common.decos import log
 from client.database import ClientDatabase
 from client.transport import ClientTransport
 from client.main_window import ClientMainWindow
-
+from client.start_dialog import UserNameDialog
 
 # Инициализация клиентского логера
 logger = logging.getLogger('client')
+
 
 # Парсер аргументов коммандной строки
 @log
@@ -38,19 +39,24 @@ def arg_parser():
 
 # Основная функция клиента
 if __name__ == '__main__':
-    # Сообщаем о запуске
-    print('Консольный месседжер. Клиентский модуль.')
-
     # Загружаем параметы коммандной строки
     server_address, server_port, client_name = arg_parser()
 
-    # Если имя пользователя не было задано, необходимо запросить пользователя.
-    if not client_name:
-        # client_name = input('Введите имя пользователя: ')
-        client_name = 'test1'
-    else:
-        print(f'Клиентский модуль запущен с именем: {client_name}')
+    # Создаём клиентокое приложение
+    client_app = QApplication(sys.argv)
 
+    # Если имя пользователя не было указано в командной строке то запросим его
+    if not client_name:
+        start_dialog = UserNameDialog()
+        client_app.exec_()
+        # Если пользователь ввёл имя и нажал ОК, то сохраняем ведённое и удаляем объект, инааче выходим
+        if start_dialog.ok_pressed:
+            client_name = start_dialog.client_name.text()
+            del start_dialog
+        else:
+            exit(0)
+
+    # Записываем логи
     logger.info(
         f'Запущен клиент с парамертами: адрес сервера: {server_address} , порт: {server_port}, имя пользователя: {client_name}')
 
@@ -59,21 +65,18 @@ if __name__ == '__main__':
 
     # Создаём объект - транспорт и запускаем транспортный поток
     try:
-        transport = ClientTransport(server_port , server_address , database , client_name)
+        transport = ClientTransport(server_port, server_address, database, client_name)
     except ServerError as error:
         print(error.text)
         exit(1)
     transport.setDaemon(True)
     transport.start()
 
-
     # Создаём GUI
-    client_app = QApplication(sys.argv)
-    main_window = ClientMainWindow(database , transport)
+    main_window = ClientMainWindow(database, transport)
     main_window.make_connection(transport)
     client_app.exec_()
 
     # Раз графическая оболочка закрылась, закрываем транспорт
     transport.transport_shutdown()
     transport.join()
-
