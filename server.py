@@ -6,7 +6,7 @@ import configparser
 import logs.config_server_log
 from common.utils import *
 from common.decos import log
-from server.processor import MessageProcessor
+from server.core import MessageProcessor
 from server.database import ServerStorage
 from server.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication
