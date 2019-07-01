@@ -167,8 +167,9 @@ class ClientTransport(threading.Thread, QObject):
             USER: self.username,
             ACCOUNT_NAME: contact
         }
-        send_message(self.transport, req)
-        self.process_server_ans(get_message(self.transport))
+        with socket_lock:
+            send_message(self.transport, req)
+            self.process_server_ans(get_message(self.transport))
 
     # Функция удаления клиента на сервере
     def remove_contact(self, contact):
@@ -179,8 +180,9 @@ class ClientTransport(threading.Thread, QObject):
             USER: self.username,
             ACCOUNT_NAME: contact
         }
-        send_message(self.transport, req)
-        self.process_server_ans(get_message(self.transport))
+        with socket_lock:
+            send_message(self.transport, req)
+            self.process_server_ans(get_message(self.transport))
 
     # Функция закрытия соединения, отправляет сообщение о выходе.
     def transport_shutdown(self):
