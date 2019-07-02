@@ -99,9 +99,15 @@ class ClientTransport(threading.Thread, QObject):
                     ACCOUNT_NAME: self.username
                 }
             }
-            # Отправляем серверу приветственное сообщение, в ответ принимаем набор байтов.
+            # Отправляем серверу приветственное сообщение, в ответ сообщение.
             try:
                 send_message(self.transport, presense)
+                ans = get_message(self.transport)
+                # Если сервер вернул ошибку, бросаем исключение.
+                if RESPONSE in ans:
+                    if ans[RESPONSE] == 400:
+                        raise ServerError(ans[ERROR])
+                # Если всё нормально, то продолжаем процедуру авторизации.
                 rand_data = self.transport.recv(64)
                 hash = hmac.new(passwd_hash_string, rand_data)
                 digest = hash.digest()

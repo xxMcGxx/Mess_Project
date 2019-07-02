@@ -232,13 +232,9 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             sock.close()
         else:
             # Иначе отвечаем 200 и проводим процедуру авторизации
-            try:
-                send_message(sock , RESPONSE_200)
-            except OSError:
-                sock.close()
-                return
             rand_message = os.urandom(64)
             try:
+                send_message(sock, RESPONSE_200)
                 sock.send(rand_message)
             except OSError:
                 sock.close()
