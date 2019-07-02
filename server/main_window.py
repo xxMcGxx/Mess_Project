@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
     # Функция вызывающая окно регистрации пользователя
     def reg_user(self):
         global reg_window
-        reg_window = RegisterUser(self.database)
+        reg_window = RegisterUser(self.database , self.server_thread)
         reg_window.show()
 
     # Функция вызывающяя окно удаления пользователя.

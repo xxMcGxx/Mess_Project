@@ -87,6 +87,10 @@ class ClientDatabase:
             self.session.add(contact_row)
             self.session.commit()
 
+    # Функция очсистки контактов
+    def contacts_clear(self):
+        self.session.query(self.Contacts).delete()
+
     # Функция удаления контакта
     def del_contact(self, contact):
         self.session.query(self.Contacts).filter_by(name=contact).delete()

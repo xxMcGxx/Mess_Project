@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSlot, QEvent, Qt
 import sys
 import json
 import logging
+import time
 
 sys.path.append('../')
 from client.main_window_conv import Ui_MainClientWindow
@@ -236,7 +237,7 @@ class ClientMainWindow(QMainWindow):
             else:
                 print('NO')
                 # Раз нету,спрашиваем хотим ли добавить юзера в контакты.
-                if self.messages.question(self, 'Новое сообщение', \
+                if self.messages.question(self, 'Новое сообщение',
                                           f'Получено новое сообщение от {sender}.\n Данного пользователя нет в вашем контакт-листе.\n Добавить в контакты и открыть чат с ним?',
                                           QMessageBox.Yes,
                                           QMessageBox.No) == QMessageBox.Yes:
@@ -251,6 +252,21 @@ class ClientMainWindow(QMainWindow):
         self.messages.warning(self, 'Сбой соединения', 'Потеряно соединение с сервером. ')
         self.close()
 
+    # Слот сообщения 205 - требование сервером обновить справочники доступных пользователей и контактов
+    # Может получиться так, что удалён текущий собеседник, надо проверить это и закрыть чат с предупреждением.
+    # иначе просто обновить список контактов, без выдачи предупреждения пользователю.
+    @pyqtSlot()
+    def sig_205(self):
+        #time.sleep(2)
+        print(self.database.check_user(self.current_chat))
+        if self.current_chat and not self.database.check_user(self.current_chat):
+            self.messages.warning(self, 'Сочувствую', 'К сожалению собеседник был удалён с сервера.')
+            self.set_disabled_input()
+            self.current_chat = None
+        print('Contacts update!')
+        self.clients_list_update()
+
     def make_connection(self, trans_obj):
         trans_obj.new_message.connect(self.message)
         trans_obj.connection_lost.connect(self.connection_lost)
+        trans_obj.message_205.connect(self.sig_205)

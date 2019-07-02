@@ -8,10 +8,11 @@ import sys
 
 # Диалог регистрации пользователя на сервере.
 class RegisterUser(QDialog):
-    def __init__(self, database):
+    def __init__(self, database , server):
         super().__init__()
 
         self.database = database
+        self.server = server
 
         self.setWindowTitle('Регистрация')
         self.setFixedSize(175, 183)
@@ -55,7 +56,7 @@ class RegisterUser(QDialog):
 
         self.show()
 
-    # Функция проверки правильности ввода и сохранения в базу хэша пароля.
+    # Функция проверки правильности ввода и сохранения в базу нового пользователя.
     def save_data(self):
         if not self.client_name.text():
             self.messages.critical(self, 'Ошибка', 'Не указано имя пользователя.')
@@ -73,6 +74,8 @@ class RegisterUser(QDialog):
             passwd_hash = hashlib.pbkdf2_hmac('sha512', passwd_bytes, salt, 10000)
             self.database.add_user(self.client_name.text(), binascii.hexlify(passwd_hash))
             self.messages.information(self, 'Успех', 'Пользователь успешно зарегистрирован.')
+            # Рассылаем клиентам сообщение о необходимости обновить справичники
+            self.server.service_update_lists()
             self.close()
 
 

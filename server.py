@@ -64,11 +64,13 @@ def main():
 
     # Если  указан параметр без GUI то запускаем простенький обработчик консольного ввода
     if gui_flag:
-        command = input('Введите exit для завершения работы сервера.')
-        if command == 'exit':
-            # Если выход, то завршаем основной цикл сервера.
-            server.running = False
-            server.join()
+        while True:
+            command = input('Введите exit для завершения работы сервера.')
+            if command == 'exit':
+                # Если выход, то завршаем основной цикл сервера.
+                server.running = False
+                server.join()
+                break
 
     # Если не указан запуск без GUI, то запускаем GUI:
     else:

@@ -7,6 +7,7 @@ import json
 import threading
 import hashlib
 import hmac
+import binascii
 from PyQt5.QtCore import pyqtSignal, QObject
 
 sys.path.append('../')
@@ -23,6 +24,7 @@ socket_lock = threading.Lock()
 class ClientTransport(threading.Thread, QObject):
     # Сигналы новое сообщение и потеря соединения
     new_message = pyqtSignal(str)
+    message_205 = pyqtSignal()
     connection_lost = pyqtSignal()
 
     def __init__(self, port, ip_address, database, username, passwd):
@@ -99,7 +101,7 @@ class ClientTransport(threading.Thread, QObject):
                     ACCOUNT_NAME: self.username
                 }
             }
-            # Отправляем серверу приветственное сообщение, в ответ сообщение.
+            # Отправляем серверу приветственное сообщение.
             try:
                 send_message(self.transport, presense)
                 ans = get_message(self.transport)
@@ -107,15 +109,19 @@ class ClientTransport(threading.Thread, QObject):
                 if RESPONSE in ans:
                     if ans[RESPONSE] == 400:
                         raise ServerError(ans[ERROR])
-                # Если всё нормально, то продолжаем процедуру авторизации.
-                rand_data = self.transport.recv(64)
-                hash = hmac.new(passwd_hash_string, rand_data)
-                digest = hash.digest()
-                self.transport.send(digest)
-                self.process_server_ans(get_message(self.transport))
+                    elif ans[RESPONSE] == 511:
+                        # Если всё нормально, то продолжаем процедуру авторизации.
+                        ans_data = ans[DATA]
+                        hash = hmac.new(passwd_hash_string, ans_data.encode('utf-8'))
+                        digest = hash.digest()
+                        my_ans = RESPONSE_511
+                        my_ans[DATA] = binascii.hexlify(digest).decode('ascii')
+                        send_message(self.transport , my_ans)
+                        self.process_server_ans(get_message(self.transport))
             except OSError as err:
-                print(err)
                 raise ServerError('Сбой соединения в процессе авторизации.')
+            except json.JSONDecodeError:
+                exit(2)
 
     # Функция обрабатывающяя сообщения от сервера. Ничего не возращает. Генерирует исключение при ошибке.
     def process_server_ans(self, message):
@@ -127,8 +133,13 @@ class ClientTransport(threading.Thread, QObject):
                 return
             elif message[RESPONSE] == 400:
                 raise ServerError(f'{message[ERROR]}')
+            elif message[RESPONSE] == 205:
+                print('205!!')
+                self.user_list_update()
+                self.contacts_list_update()
+                self.message_205.emit()
             else:
-                logger.debug(f'Принят неизвестный код подтверждения {message[RESPONSE]}')
+                logger.error(f'Принят неизвестный код подтверждения {message[RESPONSE]}')
 
         # Если это сообщение от пользователя добавляем в базу, даём сигнал о новом сообщении
         elif ACTION in message and message[ACTION] == MESSAGE and SENDER in message and DESTINATION in message \
@@ -137,8 +148,10 @@ class ClientTransport(threading.Thread, QObject):
             self.database.save_message(message[SENDER], 'in', message[MESSAGE_TEXT])
             self.new_message.emit(message[SENDER])
 
+
     # Функция обновляющая контакт - лист с сервера
     def contacts_list_update(self):
+        self.database.contacts_clear()
         logger.debug(f'Запрос контакт листа для пользователся {self.name}')
         req = {
             ACTION: GET_CONTACTS,
@@ -164,9 +177,12 @@ class ClientTransport(threading.Thread, QObject):
             TIME: time.time(),
             ACCOUNT_NAME: self.username
         }
+        print(req , socket_lock.locked())
         with socket_lock:
+            print(req)
             send_message(self.transport, req)
             ans = get_message(self.transport)
+            print(ans)
         if RESPONSE in ans and ans[RESPONSE] == 202:
             self.database.add_users(ans[LIST_INFO])
         else:
@@ -237,6 +253,7 @@ class ClientTransport(threading.Thread, QObject):
             # Отдыхаем секунду и снова пробуем захватить сокет.
             # если не сделать тут задержку, то отправка может достаточно долго ждать освобождения сокета.
             time.sleep(1)
+            message = None
             with socket_lock:
                 try:
                     self.transport.settimeout(0.5)
@@ -251,9 +268,11 @@ class ClientTransport(threading.Thread, QObject):
                     logger.debug(f'Потеряно соединение с сервером.')
                     self.running = False
                     self.connection_lost.emit()
-                # Если сообщение получено, то вызываем функцию обработчик:
-                else:
-                    logger.debug(f'Принято сообщение с сервера: {message}')
-                    self.process_server_ans(message)
                 finally:
                     self.transport.settimeout(5)
+
+            # Если сообщение получено, то вызываем функцию обработчик:
+            if message:
+                logger.debug(f'Принято сообщение с сервера: {message}')
+                self.process_server_ans(message)
+

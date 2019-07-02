@@ -6,6 +6,7 @@ import socket
 import json
 import hmac
 import hashlib
+import binascii
 import os
 
 sys.path.append('../')
@@ -79,10 +80,10 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             # принимаем сообщения и если ошибка, исключаем клиента.
             if recv_data_lst:
                 for client_with_message in recv_data_lst:
-                    #try:
+                    try:
                         self.process_client_message(get_message(client_with_message), client_with_message)
-                    #except (OSError, json.JSONDecodeError, TypeError):
-                    #    self.remove_client(client_with_message)
+                    except (OSError, json.JSONDecodeError, TypeError):
+                        self.remove_client(client_with_message)
 
     # Функция обработчик клиента с которым потеряна связь
     # ищет клиента в словаре клиентов и удаляет его со списков и базы:
@@ -222,7 +223,6 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
         # Проверяем что пользователь зарегистрирован на сервере.
         elif not self.database.check_user(message[USER][ACCOUNT_NAME]):
             response = RESPONSE_400
-            print(111)
             response[ERROR] = 'Пользователь не зарегистрирован.'
             try:
                 send_message(sock, response)
@@ -231,30 +231,32 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             self.clients.remove(sock)
             sock.close()
         else:
-            # Иначе отвечаем 200 и проводим процедуру авторизации
-            rand_message = os.urandom(64)
-            try:
-                send_message(sock, RESPONSE_200)
-                sock.send(rand_message)
-            except OSError:
-                sock.close()
-                return
-            hash = hmac.new(self.database.get_hash(message[USER][ACCOUNT_NAME]), rand_message)
+            # Иначе отвечаем 501 и проводим процедуру авторизации
+            # Словарь - заготовка
+            message_auth = RESPONSE_511
+            # Набор байтов в hex представлении
+            random_str = binascii.hexlify(os.urandom(64))
+            # В словарь байты нельзя, декодируем (json.dumps -> TypeError)
+            message_auth[DATA] = random_str.decode('ascii')
+            # Создаём хэш пароля и связки с рандомной строкой, сохраняем серверную версию ключа в декодированом виде
+            hash = hmac.new(self.database.get_hash(message[USER][ACCOUNT_NAME]), random_str)
             digest = hash.digest()
+            serv_key = binascii.hexlify(digest).decode('ascii')
             try:
-                client_response = sock.recv(len(digest))
+                # Обмен с клиентом
+                send_message(sock, message_auth)
+                ans = get_message(sock)
             except OSError:
                 sock.close()
                 return
-            # Если ответ клиента корректый, то сохраняем его в список пользователей.
-            if hmac.compare_digest(digest, client_response):
+            # Если ответ клиента корректный, то сохраняем его в список пользователей.
+            if RESPONSE in ans and ans[RESPONSE] == 511 and serv_key == ans[DATA]:
                 self.names[message[USER][ACCOUNT_NAME]] = sock
                 client_ip, client_port = sock.getpeername()
                 self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 try:
                     send_message(sock, RESPONSE_200)
                 except OSError:
-                    print('send 200 message error')
                     self.remove_client(message[USER][ACCOUNT_NAME])
             else:
                 response = RESPONSE_400
@@ -262,8 +264,15 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
                 try:
                     send_message(sock, response)
                 except OSError:
-                    print('Passwd error')
                     pass
                 self.clients.remove(sock)
                 sock.close()
 
+    # Функция - отправляет сервисное сообщение 205 с требованием клиентам обновить списки
+    def service_update_lists(self):
+        for client in self.names:
+            try:
+                send_message(self.names[client], RESPONSE_205)
+            except OSError:
+                print(22)
+                self.remove_client(self.names[client])
