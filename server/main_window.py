@@ -7,18 +7,20 @@ from PyQt5.QtCore import QTimer
 from server.stat_window import StatWindow
 from server.config_window import ConfigWindow
 from server.add_user import RegisterUser
+from server.remove_user import DelUserDialog
 import os
 
 
 # Класс основного окна
 class MainWindow(QMainWindow):
-    def __init__(self, database, config):
+    def __init__(self, database, server, config):
         # Конструктор предка
         super().__init__()
 
         # База данных сервера
         self.database = database
 
+        self.server_thread = server
         self.config = config
 
         # Ярлык выхода
@@ -33,7 +35,10 @@ class MainWindow(QMainWindow):
         self.config_btn = QAction('Настройки сервера', self)
 
         # Кнопка регистрации пользователя
-        self.register_btn = QAction('Регистрация пользователя' , self)
+        self.register_btn = QAction('Регистрация пользователя', self)
+
+        # Кнопка удаления пользователя
+        self.remove_btn = QAction('Удаление пользователя' , self)
 
         # Кнопка вывести историю сообщений
         self.show_history_button = QAction('История клиентов', self)
@@ -49,6 +54,7 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.show_history_button)
         self.toolbar.addAction(self.config_btn)
         self.toolbar.addAction(self.register_btn)
+        self.toolbar.addAction(self.remove_btn)
 
         # Настройки геометрии основного окна
         # Поскольку работать с динамическими размерами мы не умеем, и мало времени на изучение, размер окна фиксирован.
@@ -75,6 +81,7 @@ class MainWindow(QMainWindow):
         self.show_history_button.triggered.connect(self.show_statistics)
         self.config_btn.triggered.connect(self.server_config)
         self.register_btn.triggered.connect(self.reg_user)
+        self.remove_btn.triggered.connect(self.rem_user)
 
         # Последним параметром отображаем окно.
         self.show()
@@ -117,3 +124,9 @@ class MainWindow(QMainWindow):
         global reg_window
         reg_window = RegisterUser(self.database)
         reg_window.show()
+
+    # Функция вызывающяя окно удаления пользователя.
+    def rem_user(self):
+        global rem_window
+        rem_window = DelUserDialog(self.database , self.server_thread)
+        rem_window.show()

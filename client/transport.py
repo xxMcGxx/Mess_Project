@@ -2,8 +2,11 @@ import socket
 import sys
 import time
 import logging
+import binascii
 import json
 import threading
+import hashlib
+import hmac
 from PyQt5.QtCore import pyqtSignal, QObject
 
 sys.path.append('../')
@@ -22,7 +25,7 @@ class ClientTransport(threading.Thread, QObject):
     new_message = pyqtSignal(str)
     connection_lost = pyqtSignal()
 
-    def __init__(self, port, ip_address, database, username):
+    def __init__(self, port, ip_address, database, username, passwd):
         # Вызываем конструктор предка
         threading.Thread.__init__(self)
         QObject.__init__(self)
@@ -31,6 +34,8 @@ class ClientTransport(threading.Thread, QObject):
         self.database = database
         # Имя пользователя
         self.username = username
+        # Пароль
+        self.password = passwd
         # Сокет для работы с сервером
         self.transport = None
         # Устанавливаем соединение:
@@ -78,29 +83,33 @@ class ClientTransport(threading.Thread, QObject):
 
         logger.debug('Установлено соединение с сервером')
 
-        # Посылаем серверу приветственное сообщение и получаем ответ что всё нормально или ловим исключение.
-        try:
-            with socket_lock:
-                send_message(self.transport, self.create_presence())
-                self.process_server_ans(get_message(self.transport))
-        except (OSError, json.JSONDecodeError):
-            logger.critical('Потеряно соединение с сервером!')
-            raise ServerError('Потеряно соединение с сервером!')
+        # Запускаем процедуру авторизации
+        # Получаем хэш пароля
+        passwd_bytes = self.password.encode('utf-8')
+        salt = self.username.lower().encode('utf-8')
+        passwd_hash = hashlib.pbkdf2_hmac('sha512', passwd_bytes, salt, 10000)
+        passwd_hash_string = binascii.hexlify(passwd_hash)
 
-        # Раз всё хорошо, сообщение о установке соединения.
-        logger.info('Соединение с сервером успешно установлено.')
-
-    # Функция, генерирующая приветственное сообщение для сервера
-    def create_presence(self):
-        out = {
-            ACTION: PRESENCE,
-            TIME: time.time(),
-            USER: {
-                ACCOUNT_NAME: self.username
+        # Авторизируемся на сервере
+        with socket_lock:
+            presense = {
+                ACTION: PRESENCE,
+                TIME: time.time(),
+                USER: {
+                    ACCOUNT_NAME: self.username
+                }
             }
-        }
-        logger.debug(f'Сформировано {PRESENCE} сообщение для пользователя {self.username}')
-        return out
+            # Отправляем серверу приветственное сообщение, в ответ принимаем набор байтов.
+            try:
+                send_message(self.transport, presense)
+                rand_data = self.transport.recv(64)
+                hash = hmac.new(passwd_hash_string, rand_data)
+                digest = hash.digest()
+                self.transport.send(digest)
+                self.process_server_ans(get_message(self.transport))
+            except OSError as err:
+                print(err)
+                raise ServerError('Сбой соединения в процессе авторизации.')
 
     # Функция обрабатывающяя сообщения от сервера. Ничего не возращает. Генерирует исключение при ошибке.
     def process_server_ans(self, message):
@@ -119,9 +128,8 @@ class ClientTransport(threading.Thread, QObject):
         elif ACTION in message and message[ACTION] == MESSAGE and SENDER in message and DESTINATION in message \
                 and MESSAGE_TEXT in message and message[DESTINATION] == self.username:
             logger.debug(f'Получено сообщение от пользователя {message[SENDER]}:{message[MESSAGE_TEXT]}')
-            self.database.save_message(message[SENDER] , 'in' , message[MESSAGE_TEXT])
+            self.database.save_message(message[SENDER], 'in', message[MESSAGE_TEXT])
             self.new_message.emit(message[SENDER])
-
 
     # Функция обновляющая контакт - лист с сервера
     def contacts_list_update(self):

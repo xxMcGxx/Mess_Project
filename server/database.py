@@ -138,18 +138,32 @@ class ServerStorage:
         # Сохрраняем изменения
         self.session.commit()
 
-    # Функция регистрации пользователя. Принимает имя и хэш пароля.
+    # Функция регистрации пользователя. Принимает имя и хэш пароля, создаёт запись втаблице статистики.
     def add_user(self, name, passwd_hash):
-        row = self.AllUsers(name, passwd_hash)
-        self.session.add(row)
+        user_row = self.AllUsers(name, passwd_hash)
+        self.session.add(user_row)
+        self.session.commit()
+        history_row = self.UsersHistory(user_row.id)
+        self.session.add(history_row)
+        self.session.commit()
+
+    # Функция удаляющая пользователя из базы
+    def remove_user(self, name):
+        user = self.session.query(self.AllUsers).filter_by(name=name).first()
+        self.session.query(self.ActiveUsers).filter_by(user=user.id).delete()
+        self.session.query(self.LoginHistory).filter_by(name=user.id).delete()
+        self.session.query(self.UsersContacts).filter_by(user=user.id).delete()
+        self.session.query(self.UsersContacts).filter_by(contact=user.id).delete()
+        self.session.query(self.UsersHistory).filter_by(user=user.id).delete()
+        self.session.query(self.AllUsers).filter_by(name=name).delete()
         self.session.commit()
 
     # Функция возвращает хэш требуемго пользователя.
     def get_hash(self, name):
         user = self.session.query(self.AllUsers).filter_by(name=name).first()
-        return user[3]
+        return user.passwd_hash
 
-    def check_user(self , name):
+    def check_user(self, name):
         if self.session.query(self.AllUsers).filter_by(name=name).count():
             return True
         else:
@@ -171,6 +185,8 @@ class ServerStorage:
         # Получаем ID отправителя и получателя
         sender = self.session.query(self.AllUsers).filter_by(name=sender).first().id
         recipient = self.session.query(self.AllUsers).filter_by(name=recipient).first().id
+        print(sender)
+        print(recipient)
         # Запрашиваем строки из истории и увеличиваем счётчики
         sender_row = self.session.query(self.UsersHistory).filter_by(user=sender).first()
         sender_row.sent += 1
@@ -274,9 +290,9 @@ class ServerStorage:
 
 # Отладка
 if __name__ == '__main__':
-    test_db = ServerStorage()
-    test_db.user_login('1111', '192.168.1.113', 8080)
-    test_db.user_login('McG2', '192.168.1.113', 8081)
+    test_db = ServerStorage('../server_database.db3')
+    test_db.user_login('test1', '192.168.1.113', 8080)
+    test_db.user_login('test2', '192.168.1.113', 8081)
     print(test_db.users_list())
     # print(test_db.active_users_list())
     # test_db.user_logout('McG')
@@ -285,5 +301,5 @@ if __name__ == '__main__':
     # test_db.add_contact('test1', 'test3')
     # test_db.add_contact('test1', 'test6')
     # test_db.remove_contact('test1', 'test3')
-    test_db.process_message('McG2', '1111')
+    test_db.process_message('test1', 'test2')
     print(test_db.message_history())
