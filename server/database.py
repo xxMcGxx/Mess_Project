@@ -8,9 +8,10 @@ import datetime
 class ServerStorage:
     # Класс - отображение таблицы всех пользователей
     class AllUsers:
-        def __init__(self, username):
+        def __init__(self, username, passwd_hash):
             self.name = username
             self.last_login = datetime.datetime.now()
+            self.passwd_hash = passwd_hash
             self.id = None
 
     # Класс - отображение таблицы активных пользователей:
@@ -46,7 +47,7 @@ class ServerStorage:
             self.sent = 0
             self.accepted = 0
 
-    def __init__(self , path):
+    def __init__(self, path):
         # Создаём движок базы данных
         self.database_engine = create_engine(f'sqlite:///{path}', echo=False, pool_recycle=7200,
                                              connect_args={'check_same_thread': False})
@@ -58,7 +59,8 @@ class ServerStorage:
         users_table = Table('Users', self.metadata,
                             Column('id', Integer, primary_key=True),
                             Column('name', String, unique=True),
-                            Column('last_login', DateTime)
+                            Column('last_login', DateTime),
+                            Column('passwd_hash', String)
                             )
 
         # Создаём таблицу активных пользователей
@@ -86,7 +88,7 @@ class ServerStorage:
                          Column('contact', ForeignKey('Users.id'))
                          )
 
-        # Создаём таблицу истории пользователей
+        # Создаём таблицу статистики пользователей
         users_history_table = Table('History', self.metadata,
                                     Column('id', Integer, primary_key=True),
                                     Column('user', ForeignKey('Users.id')),
@@ -121,14 +123,9 @@ class ServerStorage:
         if rez.count():
             user = rez.first()
             user.last_login = datetime.datetime.now()
-        # Если нету, то создаздаём нового пользователя
+        # Если нету, то генерируем исключение
         else:
-            user = self.AllUsers(username)
-            self.session.add(user)
-            # Комит здесь нужен, чтобы присвоился ID
-            self.session.commit()
-            user_in_history = self.UsersHistory(user.id)
-            self.session.add(user_in_history)
+            raise ValueError('Пользователь не зарегистрирован.')
 
         # Теперь можно создать запись в таблицу активных пользователей о факте входа.
         new_active_user = self.ActiveUsers(user.id, ip_address, port, datetime.datetime.now())
@@ -140,6 +137,23 @@ class ServerStorage:
 
         # Сохрраняем изменения
         self.session.commit()
+
+    # Функция регистрации пользователя. Принимает имя и хэш пароля.
+    def add_user(self, name, passwd_hash):
+        row = self.AllUsers(name, passwd_hash)
+        self.session.add(row)
+        self.session.commit()
+
+    # Функция возвращает хэш требуемго пользователя.
+    def get_hash(self, name):
+        user = self.session.query(self.AllUsers).filter_by(name=name).first()
+        return user[3]
+
+    def check_user(self , name):
+        if self.session.query(self.AllUsers).filter_by(name=name).count():
+            return True
+        else:
+            return False
 
     # Функция фиксирующая отключение пользователя
     def user_logout(self, username):

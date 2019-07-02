@@ -10,6 +10,7 @@ from server.core import MessageProcessor
 from server.database import ServerStorage
 from server.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
 
 # Инициализация логирования сервера.
 logger = logging.getLogger('server')
@@ -73,6 +74,7 @@ def main():
     else:
         # Создаём графическое окуружение для сервера:
         server_app = QApplication(sys.argv)
+        server_app.setAttribute(Qt.AA_DisableWindowContextHelpButton)
         main_window = MainWindow(database, config)
 
         # Запускаем GUI

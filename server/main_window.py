@@ -6,6 +6,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import QTimer
 from server.stat_window import StatWindow
 from server.config_window import ConfigWindow
+from server.add_user import RegisterUser
 import os
 
 
@@ -31,6 +32,9 @@ class MainWindow(QMainWindow):
         # Кнопка настроек сервера
         self.config_btn = QAction('Настройки сервера', self)
 
+        # Кнопка регистрации пользователя
+        self.register_btn = QAction('Регистрация пользователя' , self)
+
         # Кнопка вывести историю сообщений
         self.show_history_button = QAction('История клиентов', self)
 
@@ -44,6 +48,7 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.refresh_button)
         self.toolbar.addAction(self.show_history_button)
         self.toolbar.addAction(self.config_btn)
+        self.toolbar.addAction(self.register_btn)
 
         # Настройки геометрии основного окна
         # Поскольку работать с динамическими размерами мы не умеем, и мало времени на изучение, размер окна фиксирован.
@@ -69,6 +74,7 @@ class MainWindow(QMainWindow):
         self.refresh_button.triggered.connect(self.create_users_model)
         self.show_history_button.triggered.connect(self.show_statistics)
         self.config_btn.triggered.connect(self.server_config)
+        self.register_btn.triggered.connect(self.reg_user)
 
         # Последним параметром отображаем окно.
         self.show()
@@ -105,3 +111,9 @@ class MainWindow(QMainWindow):
         global config_window
         # Создаём окно и заносим в него текущие параметры
         config_window = ConfigWindow(self.config)
+
+    # Функция вызывающая окно регистрации пользователя
+    def reg_user(self):
+        global reg_window
+        reg_window = RegisterUser(self.database)
+        reg_window.show()
