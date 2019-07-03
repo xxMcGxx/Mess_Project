@@ -8,12 +8,11 @@ import hmac
 import hashlib
 import binascii
 import os
-
-sys.path.append('../')
 from common.metaclasses import ServerMaker
 from common.descryptors import Port
 from common.variables import *
 from common.utils import send_message, get_message
+from common.decos import login_required
 
 # Загрузка логера
 logger = logging.getLogger('server')
@@ -80,10 +79,10 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             # принимаем сообщения и если ошибка, исключаем клиента.
             if recv_data_lst:
                 for client_with_message in recv_data_lst:
-                    try:
+                    #try:
                         self.process_client_message(get_message(client_with_message), client_with_message)
-                    except (OSError, json.JSONDecodeError, TypeError):
-                        self.remove_client(client_with_message)
+                    #except (OSError, json.JSONDecodeError, TypeError):
+                    #    self.remove_client(client_with_message)
 
     # Функция обработчик клиента с которым потеряна связь
     # ищет клиента в словаре клиентов и удаляет его со списков и базы:
@@ -130,6 +129,7 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
 
     # Обработчик сообщений от клиентов, принимает словарь - сообщение от клиента, проверяет корректность, отправляет
     #     словарь-ответ в случае необходимости.
+    @login_required
     def process_client_message(self, message, client):
         logger.debug(f'Разбор сообщения от клиента : {message}')
         # Если это сообщение о присутствии, принимаем и отвечаем

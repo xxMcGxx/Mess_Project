@@ -120,8 +120,8 @@ class ClientTransport(threading.Thread, QObject):
                         self.process_server_ans(get_message(self.transport))
             except OSError as err:
                 raise ServerError('Сбой соединения в процессе авторизации.')
-            except json.JSONDecodeError:
-                exit(2)
+            #except json.JSONDecodeError:
+            #    exit(2)
 
     # Функция обрабатывающяя сообщения от сервера. Ничего не возращает. Генерирует исключение при ошибке.
     def process_server_ans(self, message):
