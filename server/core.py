@@ -249,7 +249,6 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
                 sock.close()
                 return
             client_digest = binascii.a2b_base64(ans[DATA])
-            print(ans[DATA])
             # Если ответ клиента корректный, то сохраняем его в список пользователей.
             if RESPONSE in ans and ans[RESPONSE] == 511 and hmac.compare_digest(digest , client_digest):
                 self.names[message[USER][ACCOUNT_NAME]] = sock

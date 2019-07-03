@@ -116,7 +116,6 @@ class ClientTransport(threading.Thread, QObject):
                         digest = hash.digest()
                         my_ans = RESPONSE_511
                         my_ans[DATA] = binascii.b2a_base64(digest).decode('ascii')
-                        print(my_ans[DATA])
                         send_message(self.transport , my_ans)
                         self.process_server_ans(get_message(self.transport))
             except OSError as err:
