@@ -12,10 +12,9 @@ import datetime
 class ClientDatabase:
     # Класс - отображение таблицы известных пользователей.
     class KnownUsers:
-        def __init__(self, user, key):
+        def __init__(self, user):
             self.id = None
             self.username = user
-            self.pubkey = key
 
     # Класс - отображение таблицы истории сообщений
     class MessageHistory:
@@ -48,8 +47,7 @@ class ClientDatabase:
         # Создаём таблицу известных пользователей
         users = Table('known_users', self.metadata,
                       Column('id', Integer, primary_key=True),
-                      Column('username', String),
-                      Column('pubkey', String)
+                      Column('username', String)
                       )
 
         # Создаём таблицу истории сообщений
@@ -100,11 +98,10 @@ class ClientDatabase:
 
     # Функция добавления известных пользователей.
     # Пользователи получаются только с сервера, поэтому таблица очищается.
-    def add_users(self, users_dict):
-        print(users_dict)
+    def add_users(self, users_list):
         self.session.query(self.KnownUsers).delete()
-        for user in users_dict:
-            user_row = self.KnownUsers(user, users_dict[user])
+        for user in users_list:
+            user_row = self.KnownUsers(user)
             self.session.add(user_row)
         self.session.commit()
 

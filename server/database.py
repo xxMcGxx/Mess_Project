@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey, DateTime
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey, DateTime, Text
 from sqlalchemy.orm import mapper, sessionmaker
 from common.variables import *
 import datetime
@@ -62,7 +62,7 @@ class ServerStorage:
                             Column('name', String, unique=True),
                             Column('last_login', DateTime),
                             Column('passwd_hash', String),
-                            Column('pubkey', String)
+                            Column('pubkey', Text)
                             )
 
         # Создаём таблицу активных пользователей
@@ -119,8 +119,6 @@ class ServerStorage:
     # Функция выполняющяяся при входе пользователя, записывает в базу факт входа
     # Обновляет открытый ключ пользователя при его изменении
     def user_login(self, username, ip_address, port, key):
-        # Флаг изменения ключа
-        key_modified = False
         # Запрос в таблицу пользователей на наличие там пользователя с таким именем
         rez = self.session.query(self.AllUsers).filter_by(name=username)
 
@@ -131,7 +129,6 @@ class ServerStorage:
             user.last_login = datetime.datetime.now()
             if user.pubkey != key:
                 user.pubkey = key
-                key_modified = True
         # Если нету, то генерируем исключение
         else:
             raise ValueError('Пользователь не зарегистрирован.')
@@ -146,9 +143,6 @@ class ServerStorage:
 
         # Сохрраняем изменения
         self.session.commit()
-
-        # Возвращаем True если ключ пользователя изменился
-        return key_modified
 
     # Функция регистрации пользователя. Принимает имя и хэш пароля, создаёт запись втаблице статистики.
     def add_user(self, name, passwd_hash):
@@ -174,6 +168,11 @@ class ServerStorage:
     def get_hash(self, name):
         user = self.session.query(self.AllUsers).filter_by(name=name).first()
         return user.passwd_hash
+
+    # Функция возвращает публичный ключ пользователя
+    def get_pubkey(self , name):
+        user = self.session.query(self.AllUsers).filter_by(name=name).first()
+        return user.pubkey
 
     def check_user(self, name):
         if self.session.query(self.AllUsers).filter_by(name=name).count():
@@ -242,8 +241,7 @@ class ServerStorage:
         # Запрос строк таблицы пользователей.
         query = self.session.query(
             self.AllUsers.name,
-            self.AllUsers.last_login,
-            self.AllUsers.pubkey
+            self.AllUsers.last_login
         )
         # Возвращаем список кортежей
         return query.all()

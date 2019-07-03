@@ -41,7 +41,6 @@ def login_required(func):
                 if isinstance(arg, socket.socket):
                     # Проверяем, что данный сокет есть в списке names класса MessageProcessor
                     for client in args[0].names:
-                        print()
                         if args[0].names[client] == arg:
                             found = True
 

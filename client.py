@@ -4,8 +4,6 @@ import argparse
 import sys
 import os
 from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
-from Crypto.Cipher import AES, PKCS1_OAEP
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from common.variables import *
@@ -47,8 +45,6 @@ def arg_parser():
 if __name__ == '__main__':
     # Загружаем параметы коммандной строки
     server_address, server_port, client_name, client_passwd = arg_parser()
-    client_name = 'test1'
-    client_passwd = '123'
 
     # Создаём клиентокое приложение
     client_app = QApplication(sys.argv)
@@ -72,7 +68,7 @@ if __name__ == '__main__':
     dir_path = os.path.dirname(os.path.realpath(__file__))
     key_file = os.path.join(dir_path, f'{client_name}.key')
     if not os.path.exists(key_file):
-        keys = RSA.generate(2048)
+        keys = RSA.generate(2048, os.urandom)
         with open(key_file, 'wb') as key:
             key.write(keys.export_key())
     else:
@@ -96,7 +92,7 @@ if __name__ == '__main__':
     del start_dialog
 
     # Создаём GUI
-    main_window = ClientMainWindow(database, transport)
+    main_window = ClientMainWindow(database, transport, keys)
     main_window.make_connection(transport)
     main_window.setWindowTitle(f'Чат Программа alpha release - {client_name}')
     client_app.exec_()

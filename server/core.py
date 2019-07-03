@@ -193,11 +193,29 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
         elif ACTION in message and message[ACTION] == USERS_REQUEST and ACCOUNT_NAME in message \
                 and self.names[message[ACCOUNT_NAME]] == client:
             response = RESPONSE_202
-            response[LIST_INFO] = dict([(user[0] , user[2]) for user in self.database.users_list()])
+            response[LIST_INFO] = [user[0] for user in self.database.users_list()]
             try:
                 send_message(client, response)
             except OSError:
                 self.remove_client(client)
+
+        # Если это запрос публичного ключа пользователя
+        elif ACTION in message and message[ACTION] == PUBLIC_KEY_REQUEST and ACCOUNT_NAME in message:
+            response = RESPONSE_511
+            response[DATA] = self.database.get_pubkey(message[ACCOUNT_NAME])
+            # может быть, что ключа ещё нет (пользователь никогда не логинился, тогда шлём 400)
+            if response[DATA]:
+                try:
+                    send_message(client, response)
+                except OSError:
+                    self.remove_client(client)
+            else:
+                response = RESPONSE_400
+                response[ERROR] = 'Нет публичного ключа для данного пользователя'
+                try:
+                    send_message(client, response)
+                except OSError:
+                    self.remove_client(client)
 
         # Иначе отдаём Bad request
         else:
@@ -250,7 +268,7 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
                 return
             client_digest = binascii.a2b_base64(ans[DATA])
             # Если ответ клиента корректный, то сохраняем его в список пользователей.
-            if RESPONSE in ans and ans[RESPONSE] == 511 and hmac.compare_digest(digest , client_digest):
+            if RESPONSE in ans and ans[RESPONSE] == 511 and hmac.compare_digest(digest, client_digest):
                 self.names[message[USER][ACCOUNT_NAME]] = sock
                 client_ip, client_port = sock.getpeername()
                 try:
@@ -258,10 +276,9 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
                 except OSError:
                     self.remove_client(message[USER][ACCOUNT_NAME])
                 # добавляем пользователя в список активных и если у него изменился открытый ключ
-                # информируем остальных клиентов
-                if self.database.user_login(message[USER][ACCOUNT_NAME],
-                                            client_ip, client_port , message[USER][PUBLIC_KEY]):
-                    self.service_update_lists()
+                # сохраняем новый
+                self.database.user_login(message[USER][ACCOUNT_NAME],
+                                         client_ip, client_port, message[USER][PUBLIC_KEY])
             else:
                 response = RESPONSE_400
                 response[ERROR] = 'Неверный пароль.'
