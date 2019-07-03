@@ -6,3 +6,4 @@
 *.db3-journal
 /client/__pycache__/
 /server/__pycache__/
+*.key

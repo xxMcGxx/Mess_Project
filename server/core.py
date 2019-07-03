@@ -193,7 +193,7 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
         elif ACTION in message and message[ACTION] == USERS_REQUEST and ACCOUNT_NAME in message \
                 and self.names[message[ACCOUNT_NAME]] == client:
             response = RESPONSE_202
-            response[LIST_INFO] = [user[0] for user in self.database.users_list()]
+            response[LIST_INFO] = dict([(user[0] , user[2]) for user in self.database.users_list()])
             try:
                 send_message(client, response)
             except OSError:
@@ -253,11 +253,15 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             if RESPONSE in ans and ans[RESPONSE] == 511 and hmac.compare_digest(digest , client_digest):
                 self.names[message[USER][ACCOUNT_NAME]] = sock
                 client_ip, client_port = sock.getpeername()
-                self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 try:
                     send_message(sock, RESPONSE_200)
                 except OSError:
                     self.remove_client(message[USER][ACCOUNT_NAME])
+                # добавляем пользователя в список активных и если у него изменился открытый ключ
+                # информируем остальных клиентов
+                if self.database.user_login(message[USER][ACCOUNT_NAME],
+                                            client_ip, client_port , message[USER][PUBLIC_KEY]):
+                    self.service_update_lists()
             else:
                 response = RESPONSE_400
                 response[ERROR] = 'Неверный пароль.'
@@ -274,5 +278,4 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             try:
                 send_message(self.names[client], RESPONSE_205)
             except OSError:
-                print(22)
                 self.remove_client(self.names[client])

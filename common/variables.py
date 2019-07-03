@@ -23,6 +23,7 @@ ACCOUNT_NAME = 'account_name'
 SENDER = 'from'
 DESTINATION = 'to'
 DATA = 'bin'
+PUBLIC_KEY = 'pubkey'
 
 # Прочие ключи, используемые в протоколе
 PRESENCE = 'presence'

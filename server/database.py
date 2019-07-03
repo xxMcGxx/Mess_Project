@@ -12,6 +12,7 @@ class ServerStorage:
             self.name = username
             self.last_login = datetime.datetime.now()
             self.passwd_hash = passwd_hash
+            self.pubkey = None
             self.id = None
 
     # Класс - отображение таблицы активных пользователей:
@@ -60,7 +61,8 @@ class ServerStorage:
                             Column('id', Integer, primary_key=True),
                             Column('name', String, unique=True),
                             Column('last_login', DateTime),
-                            Column('passwd_hash', String)
+                            Column('passwd_hash', String),
+                            Column('pubkey', String)
                             )
 
         # Создаём таблицу активных пользователей
@@ -115,14 +117,21 @@ class ServerStorage:
         self.session.commit()
 
     # Функция выполняющяяся при входе пользователя, записывает в базу факт входа
-    def user_login(self, username, ip_address, port):
+    # Обновляет открытый ключ пользователя при его изменении
+    def user_login(self, username, ip_address, port, key):
+        # Флаг изменения ключа
+        key_modified = False
         # Запрос в таблицу пользователей на наличие там пользователя с таким именем
         rez = self.session.query(self.AllUsers).filter_by(name=username)
 
         # Если имя пользователя уже присутствует в таблице, обновляем время последнего входа
+        # и проверяем корректность ключа. Если клиент прислал новый ключ, сохраняем его.
         if rez.count():
             user = rez.first()
             user.last_login = datetime.datetime.now()
+            if user.pubkey != key:
+                user.pubkey = key
+                key_modified = True
         # Если нету, то генерируем исключение
         else:
             raise ValueError('Пользователь не зарегистрирован.')
@@ -137,6 +146,9 @@ class ServerStorage:
 
         # Сохрраняем изменения
         self.session.commit()
+
+        # Возвращаем True если ключ пользователя изменился
+        return key_modified
 
     # Функция регистрации пользователя. Принимает имя и хэш пароля, создаёт запись втаблице статистики.
     def add_user(self, name, passwd_hash):
@@ -185,8 +197,6 @@ class ServerStorage:
         # Получаем ID отправителя и получателя
         sender = self.session.query(self.AllUsers).filter_by(name=sender).first().id
         recipient = self.session.query(self.AllUsers).filter_by(name=recipient).first().id
-        print(sender)
-        print(recipient)
         # Запрашиваем строки из истории и увеличиваем счётчики
         sender_row = self.session.query(self.UsersHistory).filter_by(user=sender).first()
         sender_row.sent += 1
@@ -232,7 +242,8 @@ class ServerStorage:
         # Запрос строк таблицы пользователей.
         query = self.session.query(
             self.AllUsers.name,
-            self.AllUsers.last_login
+            self.AllUsers.last_login,
+            self.AllUsers.pubkey
         )
         # Возвращаем список кортежей
         return query.all()

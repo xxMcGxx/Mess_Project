@@ -27,7 +27,7 @@ class ClientTransport(threading.Thread, QObject):
     message_205 = pyqtSignal()
     connection_lost = pyqtSignal()
 
-    def __init__(self, port, ip_address, database, username, passwd):
+    def __init__(self, port, ip_address, database, username, passwd , keys):
         # Вызываем конструктор предка
         threading.Thread.__init__(self)
         QObject.__init__(self)
@@ -40,6 +40,8 @@ class ClientTransport(threading.Thread, QObject):
         self.password = passwd
         # Сокет для работы с сервером
         self.transport = None
+        # Набор ключей для шифрования
+        self.keys = keys
         # Устанавливаем соединение:
         self.connection_init(port, ip_address)
         # Обновляем таблицы известных пользователей и контактов
@@ -92,13 +94,19 @@ class ClientTransport(threading.Thread, QObject):
         passwd_hash = hashlib.pbkdf2_hmac('sha512', passwd_bytes, salt, 10000)
         passwd_hash_string = binascii.hexlify(passwd_hash)
 
+        # Получаем публичный ключ в base64
+        pubkey = self.keys.publickey().export_key()
+        pubkey = binascii.b2a_base64(pubkey).decode('ascii')
+        print(pubkey)
+
         # Авторизируемся на сервере
         with socket_lock:
             presense = {
                 ACTION: PRESENCE,
                 TIME: time.time(),
                 USER: {
-                    ACCOUNT_NAME: self.username
+                    ACCOUNT_NAME: self.username,
+                    PUBLIC_KEY : pubkey
                 }
             }
             # Отправляем серверу приветственное сообщение.
@@ -132,7 +140,6 @@ class ClientTransport(threading.Thread, QObject):
             elif message[RESPONSE] == 400:
                 raise ServerError(f'{message[ERROR]}')
             elif message[RESPONSE] == 205:
-                print('205!!')
                 self.user_list_update()
                 self.contacts_list_update()
                 self.message_205.emit()
@@ -177,10 +184,8 @@ class ClientTransport(threading.Thread, QObject):
         }
         print(req , socket_lock.locked())
         with socket_lock:
-            print(req)
             send_message(self.transport, req)
             ans = get_message(self.transport)
-            print(ans)
         if RESPONSE in ans and ans[RESPONSE] == 202:
             self.database.add_users(ans[LIST_INFO])
         else:

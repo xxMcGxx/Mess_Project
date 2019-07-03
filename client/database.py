@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, Text, Meta
 from sqlalchemy.orm import mapper, sessionmaker
 import os
 import sys
+
 sys.path.append('../')
 from common.variables import *
 import datetime
@@ -11,9 +12,10 @@ import datetime
 class ClientDatabase:
     # Класс - отображение таблицы известных пользователей.
     class KnownUsers:
-        def __init__(self, user):
+        def __init__(self, user, key):
             self.id = None
             self.username = user
+            self.pubkey = key
 
     # Класс - отображение таблицы истории сообщений
     class MessageHistory:
@@ -46,7 +48,8 @@ class ClientDatabase:
         # Создаём таблицу известных пользователей
         users = Table('known_users', self.metadata,
                       Column('id', Integer, primary_key=True),
-                      Column('username', String)
+                      Column('username', String),
+                      Column('pubkey', String)
                       )
 
         # Создаём таблицу истории сообщений
@@ -97,10 +100,11 @@ class ClientDatabase:
 
     # Функция добавления известных пользователей.
     # Пользователи получаются только с сервера, поэтому таблица очищается.
-    def add_users(self, users_list):
+    def add_users(self, users_dict):
+        print(users_dict)
         self.session.query(self.KnownUsers).delete()
-        for user in users_list:
-            user_row = self.KnownUsers(user)
+        for user in users_dict:
+            user_row = self.KnownUsers(user, users_dict[user])
             self.session.add(user_row)
         self.session.commit()
 
@@ -142,16 +146,16 @@ class ClientDatabase:
 # отладка
 if __name__ == '__main__':
     test_db = ClientDatabase('test1')
-    #for i in ['test3', 'test4', 'test5']:
+    # for i in ['test3', 'test4', 'test5']:
     #    test_db.add_contact(i)
-    #test_db.add_contact('test4')
-    #test_db.add_users(['test1', 'test2', 'test3', 'test4', 'test5'])
-    #test_db.save_message('test2', 'in', f'Привет! я тестовое сообщение от {datetime.datetime.now()}!')
-    #test_db.save_message('test2', 'out', f'Привет! я другое тестовое сообщение от {datetime.datetime.now()}!')
-    #print(test_db.get_contacts())
-    #print(test_db.get_users())
-    #print(test_db.check_user('test1'))
-    #print(test_db.check_user('test10'))
-    print(sorted(test_db.get_history('test2') , key=lambda item: item[3]))
-    #test_db.del_contact('test4')
-    #print(test_db.get_contacts())
+    # test_db.add_contact('test4')
+    # test_db.add_users(['test1', 'test2', 'test3', 'test4', 'test5'])
+    # test_db.save_message('test2', 'in', f'Привет! я тестовое сообщение от {datetime.datetime.now()}!')
+    # test_db.save_message('test2', 'out', f'Привет! я другое тестовое сообщение от {datetime.datetime.now()}!')
+    # print(test_db.get_contacts())
+    # print(test_db.get_users())
+    # print(test_db.check_user('test1'))
+    # print(test_db.check_user('test10'))
+    print(sorted(test_db.get_history('test2'), key=lambda item: item[3]))
+    # test_db.del_contact('test4')
+    # print(test_db.get_contacts())
