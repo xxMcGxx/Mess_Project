@@ -79,10 +79,10 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             # принимаем сообщения и если ошибка, исключаем клиента.
             if recv_data_lst:
                 for client_with_message in recv_data_lst:
-                    #try:
+                    try:
                         self.process_client_message(get_message(client_with_message), client_with_message)
-                    #except (OSError, json.JSONDecodeError, TypeError):
-                    #    self.remove_client(client_with_message)
+                    except (OSError, json.JSONDecodeError, TypeError):
+                        self.remove_client(client_with_message)
 
     # Функция обработчик клиента с которым потеряна связь
     # ищет клиента в словаре клиентов и удаляет его со списков и базы:
@@ -238,10 +238,9 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             random_str = binascii.hexlify(os.urandom(64))
             # В словарь байты нельзя, декодируем (json.dumps -> TypeError)
             message_auth[DATA] = random_str.decode('ascii')
-            # Создаём хэш пароля и связки с рандомной строкой, сохраняем серверную версию ключа в декодированом виде
+            # Создаём хэш пароля и связки с рандомной строкой, сохраняем серверную версию ключа
             hash = hmac.new(self.database.get_hash(message[USER][ACCOUNT_NAME]), random_str)
             digest = hash.digest()
-            serv_key = binascii.hexlify(digest).decode('ascii')
             try:
                 # Обмен с клиентом
                 send_message(sock, message_auth)
@@ -249,8 +248,10 @@ class MessageProcessor(threading.Thread, metaclass=ServerMaker):
             except OSError:
                 sock.close()
                 return
+            client_digest = binascii.a2b_base64(ans[DATA])
+            print(ans[DATA])
             # Если ответ клиента корректный, то сохраняем его в список пользователей.
-            if RESPONSE in ans and ans[RESPONSE] == 511 and serv_key == ans[DATA]:
+            if RESPONSE in ans and ans[RESPONSE] == 511 and hmac.compare_digest(digest , client_digest):
                 self.names[message[USER][ACCOUNT_NAME]] = sock
                 client_ip, client_port = sock.getpeername()
                 self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)

@@ -50,7 +50,7 @@ def login_required(func):
                 if isinstance(arg, dict):
                     if ACTION in arg and arg[ACTION] == PRESENCE:
                         found = True
-            # Если не найден, то вызываем исключение.
+            # Если не не авторизован и не сообщение начала авторизации, то вызываем исключение.
             if not found:
                 raise TypeError
 

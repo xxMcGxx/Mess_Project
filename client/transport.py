@@ -115,7 +115,8 @@ class ClientTransport(threading.Thread, QObject):
                         hash = hmac.new(passwd_hash_string, ans_data.encode('utf-8'))
                         digest = hash.digest()
                         my_ans = RESPONSE_511
-                        my_ans[DATA] = binascii.hexlify(digest).decode('ascii')
+                        my_ans[DATA] = binascii.b2a_base64(digest).decode('ascii')
+                        print(my_ans[DATA])
                         send_message(self.transport , my_ans)
                         self.process_server_ans(get_message(self.transport))
             except OSError as err:
