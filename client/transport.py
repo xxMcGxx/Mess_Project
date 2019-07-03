@@ -118,10 +118,8 @@ class ClientTransport(threading.Thread, QObject):
                         my_ans[DATA] = binascii.b2a_base64(digest).decode('ascii')
                         send_message(self.transport , my_ans)
                         self.process_server_ans(get_message(self.transport))
-            except OSError as err:
+            except (OSError, json.JSONDecodeError):
                 raise ServerError('Сбой соединения в процессе авторизации.')
-            #except json.JSONDecodeError:
-            #    exit(2)
 
     # Функция обрабатывающяя сообщения от сервера. Ничего не возращает. Генерирует исключение при ошибке.
     def process_server_ans(self, message):
