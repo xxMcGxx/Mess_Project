@@ -53,7 +53,8 @@ if __name__ == '__main__':
     start_dialog = UserNameDialog()
     if not client_name or not client_passwd:
         client_app.exec_()
-        # Если пользователь ввёл имя и нажал ОК, то сохраняем ведённое и удаляем объект, инааче выходим
+        # Если пользователь ввёл имя и нажал ОК, то сохраняем ведённое и
+        # удаляем объект, инааче выходим
         if start_dialog.ok_pressed:
             client_name = start_dialog.client_name.text()
             client_passwd = start_dialog.client_passwd.text()
@@ -80,7 +81,13 @@ if __name__ == '__main__':
     database = ClientDatabase(client_name)
     # Создаём объект - транспорт и запускаем транспортный поток
     try:
-        transport = ClientTransport(server_port, server_address, database, client_name, client_passwd, keys)
+        transport = ClientTransport(
+            server_port,
+            server_address,
+            database,
+            client_name,
+            client_passwd,
+            keys)
     except ServerError as error:
         message = QMessageBox()
         message.critical(start_dialog, 'Ошибка сервера', error.text)

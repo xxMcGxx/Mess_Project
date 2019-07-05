@@ -19,23 +19,27 @@ logger = logging.getLogger('server')
 # Парсер аргументов коммандной строки.
 @log
 def arg_parser(default_port, default_address):
+    logger.debug(f'Инициализация парсера аргументов коммандной строки: {sys.argv}')
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', default=default_port, type=int, nargs='?')
     parser.add_argument('-a', default=default_address, nargs='?')
-    parser.add_argument('--no_gui', action= 'store_true')
+    parser.add_argument('--no_gui', action='store_true')
     namespace = parser.parse_args(sys.argv[1:])
     listen_address = namespace.a
     listen_port = namespace.p
     gui_flag = namespace.no_gui
-    return listen_address, listen_port , gui_flag
+    logger.debug('Аргументы успешно загружены.')
+    return listen_address, listen_port, gui_flag
 
 
 # Загрузка файла конфигурации
+@log
 def config_load():
     config = configparser.ConfigParser()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     config.read(f"{dir_path}/{'server.ini'}")
-    # Если конфиг файл загружен правильно, запускаемся, иначе конфиг по умолчанию.
+    # Если конфиг файл загружен правильно, запускаемся, иначе конфиг по
+    # умолчанию.
     if 'SETTINGS' in config:
         return config
     else:
@@ -46,23 +50,30 @@ def config_load():
         config.set('SETTINGS', 'Database_file', 'server_database.db3')
         return config
 
-
+# Основная функция
+@log
 def main():
     # Загрузка файла конфигурации сервера
     config = config_load()
 
-    # Загрузка параметров командной строки, если нет параметров, то задаём значения по умоланию.
-    listen_address, listen_port , gui_flag = arg_parser(config['SETTINGS']['Default_port'], config['SETTINGS']['Listen_Address'])
+    # Загрузка параметров командной строки, если нет параметров, то задаём
+    # значения по умоланию.
+    listen_address, listen_port, gui_flag = arg_parser(
+        config['SETTINGS']['Default_port'], config['SETTINGS']['Listen_Address'])
 
     # Инициализация базы данных
-    database = ServerStorage(os.path.join(config['SETTINGS']['Database_path'], config['SETTINGS']['Database_file']))
+    database = ServerStorage(
+        os.path.join(
+            config['SETTINGS']['Database_path'],
+            config['SETTINGS']['Database_file']))
 
     # Создание экземпляра класса - сервера и его запуск:
     server = MessageProcessor(listen_address, listen_port, database)
     server.daemon = True
     server.start()
 
-    # Если  указан параметр без GUI то запускаем простенький обработчик консольного ввода
+    # Если  указан параметр без GUI то запускаем простенький обработчик
+    # консольного ввода
     if gui_flag:
         while True:
             command = input('Введите exit для завершения работы сервера.')
@@ -77,7 +88,7 @@ def main():
         # Создаём графическое окуружение для сервера:
         server_app = QApplication(sys.argv)
         server_app.setAttribute(Qt.AA_DisableWindowContextHelpButton)
-        main_window = MainWindow(database, server , config)
+        main_window = MainWindow(database, server, config)
 
         # Запускаем GUI
         server_app.exec_()
