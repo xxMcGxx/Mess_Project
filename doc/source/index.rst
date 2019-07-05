@@ -12,6 +12,8 @@ Welcome to Another one messenger's documentation!
    
    launcher
    common
+   logs
+   client
    
 
 

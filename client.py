@@ -21,6 +21,11 @@ logger = logging.getLogger('client')
 # Парсер аргументов коммандной строки
 @log
 def arg_parser():
+    '''
+    Парсер аргументов командной строки, возвращает кортеж из 4 элементов
+    адрес сервера, порт, имя пользователя, пароль.
+    Выполняет проверку на корректность номера порта.
+    '''
     parser = argparse.ArgumentParser()
     parser.add_argument('addr', default=DEFAULT_IP_ADDRESS, nargs='?')
     parser.add_argument('port', default=DEFAULT_PORT, type=int, nargs='?')
