@@ -1,6 +1,4 @@
-import sys
 
-sys.path.append('../')
 from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QApplication, QLabel, QTableView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import QTimer
@@ -8,11 +6,11 @@ from server.stat_window import StatWindow
 from server.config_window import ConfigWindow
 from server.add_user import RegisterUser
 from server.remove_user import DelUserDialog
-import os
 
 
-# Класс основного окна
 class MainWindow(QMainWindow):
+    '''Класс - основное окно сервера.'''
+
     def __init__(self, database, server, config):
         # Конструктор предка
         super().__init__()
@@ -38,7 +36,7 @@ class MainWindow(QMainWindow):
         self.register_btn = QAction('Регистрация пользователя', self)
 
         # Кнопка удаления пользователя
-        self.remove_btn = QAction('Удаление пользователя' , self)
+        self.remove_btn = QAction('Удаление пользователя', self)
 
         # Кнопка вывести историю сообщений
         self.show_history_button = QAction('История клиентов', self)
@@ -57,7 +55,8 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.remove_btn)
 
         # Настройки геометрии основного окна
-        # Поскольку работать с динамическими размерами мы не умеем, и мало времени на изучение, размер окна фиксирован.
+        # Поскольку работать с динамическими размерами мы не умеем, и мало
+        # времени на изучение, размер окна фиксирован.
         self.setFixedSize(800, 600)
         self.setWindowTitle('Messaging Server alpha release')
 
@@ -86,11 +85,12 @@ class MainWindow(QMainWindow):
         # Последним параметром отображаем окно.
         self.show()
 
-    # Создаём модель и заполняем таблицу подключений.
     def create_users_model(self):
+        '''Метод заполняющий таблицу активных пользователей.'''
         list_users = self.database.active_users_list()
         list = QStandardItemModel()
-        list.setHorizontalHeaderLabels(['Имя Клиента', 'IP Адрес', 'Порт', 'Время подключения'])
+        list.setHorizontalHeaderLabels(
+            ['Имя Клиента', 'IP Адрес', 'Порт', 'Время подключения'])
         for row in list_users:
             user, ip, port, time = row
             user = QStandardItem(user)
@@ -99,7 +99,8 @@ class MainWindow(QMainWindow):
             ip.setEditable(False)
             port = QStandardItem(str(port))
             port.setEditable(False)
-            # Уберём милисекунды из строки времени, т.к. такая точность не требуется.
+            # Уберём милисекунды из строки времени, т.к. такая точность не
+            # требуется.
             time = QStandardItem(str(time.replace(microsecond=0)))
             time.setEditable(False)
             list.appendRow([user, ip, port, time])
@@ -107,26 +108,26 @@ class MainWindow(QMainWindow):
         self.active_clients_table.resizeColumnsToContents()
         self.active_clients_table.resizeRowsToContents()
 
-    # Функция создающяя окно со статистикой клиентов
     def show_statistics(self):
+        '''Метод создающий окно со статистикой клиентов.'''
         global stat_window
         stat_window = StatWindow(self.database)
         stat_window.show()
 
-    # Функция создающяя окно с настройками сервера.
     def server_config(self):
+        '''Метод создающий окно с настройками сервера.'''
         global config_window
         # Создаём окно и заносим в него текущие параметры
         config_window = ConfigWindow(self.config)
 
-    # Функция вызывающая окно регистрации пользователя
     def reg_user(self):
+        '''Метод создающий окно регистрации пользователя.'''
         global reg_window
-        reg_window = RegisterUser(self.database , self.server_thread)
+        reg_window = RegisterUser(self.database, self.server_thread)
         reg_window.show()
 
-    # Функция вызывающяя окно удаления пользователя.
     def rem_user(self):
+        '''Метод создающий окно удаления пользователя.'''
         global rem_window
-        rem_window = DelUserDialog(self.database , self.server_thread)
+        rem_window = DelUserDialog(self.database, self.server_thread)
         rem_window.show()

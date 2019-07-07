@@ -16,10 +16,11 @@ from PyQt5.QtCore import Qt
 logger = logging.getLogger('server')
 
 
-# Парсер аргументов коммандной строки.
 @log
 def arg_parser(default_port, default_address):
-    logger.debug(f'Инициализация парсера аргументов коммандной строки: {sys.argv}')
+    '''Парсер аргументов коммандной строки.'''
+    logger.debug(
+        f'Инициализация парсера аргументов коммандной строки: {sys.argv}')
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', default=default_port, type=int, nargs='?')
     parser.add_argument('-a', default=default_address, nargs='?')
@@ -32,9 +33,9 @@ def arg_parser(default_port, default_address):
     return listen_address, listen_port, gui_flag
 
 
-# Загрузка файла конфигурации
 @log
 def config_load():
+    '''Парсер конфигурационного ini файла.'''
     config = configparser.ConfigParser()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     config.read(f"{dir_path}/{'server.ini'}")
@@ -50,9 +51,10 @@ def config_load():
         config.set('SETTINGS', 'Database_file', 'server_database.db3')
         return config
 
-# Основная функция
+
 @log
 def main():
+    '''Основная функция'''
     # Загрузка файла конфигурации сервера
     config = config_load()
 

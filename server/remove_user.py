@@ -3,9 +3,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 
-# Диалог выбора контакта для удаления
 class DelUserDialog(QDialog):
-    def __init__(self, database , server):
+    '''
+    Класс - диалог выбора контакта для удаления.
+    '''
+
+    def __init__(self, database, server):
         super().__init__()
         self.database = database
         self.server = server
@@ -15,7 +18,8 @@ class DelUserDialog(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setModal(True)
 
-        self.selector_label = QLabel('Выберите пользователя для удаления:', self)
+        self.selector_label = QLabel(
+            'Выберите пользователя для удаления:', self)
         self.selector_label.setFixedSize(200, 20)
         self.selector_label.move(10, 0)
 
@@ -35,24 +39,18 @@ class DelUserDialog(QDialog):
 
         self.all_users_fill()
 
-    # Функция - заполнитель для списка пользователей
     def all_users_fill(self):
-        self.selector.addItems([item[0] for item in self.database.users_list()])
+        '''Метод заполняющий список пользователей.'''
+        self.selector.addItems([item[0]
+                                for item in self.database.users_list()])
 
-    # Функция обработчик удаления.
-    # Проверяет наличие клиента в подключённых и закрывает соединение, та-же удаляего его из БД.
     def remove_user(self):
+        '''Метод - обработчик удаления пользователя.'''
         self.database.remove_user(self.selector.currentText())
         if self.selector.currentText() in self.server.names:
             sock = self.server.names[self.selector.currentText()]
             del self.server.names[self.selector.currentText()]
             self.server.remove_client(sock)
-        # Рассылаем клиентам сообщение о необходимости обновить справичники
+        # Рассылаем клиентам сообщение о необходимости обновить справочники
         self.server.service_update_lists()
         self.close()
-
-if __name__ == '__main__':
-    app = QApplication([])
-    window = DelContactDialog(None)
-    window.show()
-    app.exec_()

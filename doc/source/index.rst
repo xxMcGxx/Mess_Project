@@ -14,7 +14,7 @@ Welcome to Another one messenger's documentation!
    common
    logs
    client
-   
+   server
 
 
 

@@ -3,8 +3,11 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 
 
-# Класс окна со статистикой пользователей
 class StatWindow(QDialog):
+    '''
+    Класс - окно со статистикой пользователей
+    '''
+
     def __init__(self, database):
         super().__init__()
 
@@ -29,8 +32,8 @@ class StatWindow(QDialog):
 
         self.create_stat_model()
 
-    # Функция реализующая заполнение таблицы историей сообщений.
     def create_stat_model(self):
+        '''Метод реализующий заполнение таблицы статистикой сообщений.'''
         # Список записей из базы
         stat_list = self.database.message_history()
 
